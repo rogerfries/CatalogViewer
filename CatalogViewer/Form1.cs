@@ -25,8 +25,16 @@ namespace CatalogViewer
         public static TimeSpan tmeSpan_Downloading;
         public static TimeSpan tmeSpan_AppReady;
 
+        public static DateTime dlTimeStart;
+
+        public static int dlCountTarget = 0;
+        public static int dlCount = 0;
+
         BindingList<ImageList> ds_ListView = new BindingList<ImageList>();
         BindingList<ImageData> ds_ImageData = new BindingList<ImageData>();
+
+        //These delegates enable asynchronous calls
+        public delegate void SetTimerLabelCallback();
 
         DataSet ds_ImageDataDataset = new DataSet();
 
@@ -38,6 +46,8 @@ namespace CatalogViewer
         }
 
         #region "Main Program ===================================================================================================================="
+
+
 
         private void SetupImageEditor()
         {
@@ -90,8 +100,8 @@ namespace CatalogViewer
             }
 
             DateTime tmeEnd = DateTime.Now;
-            tmeSpan_AppReady = tmeEnd-tmeStart;
-            lbl_Timings.Text = String.Concat("Service Call:", tmeSpan_ServiceCall.Milliseconds.ToString()," ms, Downloading:", tmeSpan_Downloading.Milliseconds.ToString(), " ms, App Ready:", tmeSpan_AppReady.Milliseconds.ToString(), " ms");
+            tmeSpan_AppReady = tmeEnd - tmeStart;
+            //lbl_Timings.Text = String.Concat("Service Call:", tmeSpan_ServiceCall.Milliseconds.ToString()," ms, Downloading:", tmeSpan_Downloading.Milliseconds.ToString(), " ms, App Ready:", tmeSpan_AppReady.Milliseconds.ToString(), " ms");
 
             //Display the image call message
             if (m_CallIsError_Images)
@@ -241,7 +251,7 @@ namespace CatalogViewer
             DateTime tmeStart = DateTime.Now;
             List<string> lstImageURLs = GetProductImages(tbx_ArticleNum.Text); //Call the function that calls service to get the image URL's
             DateTime tmeEnd = DateTime.Now;
-            tmeSpan_ServiceCall = tmeEnd-tmeStart;
+            tmeSpan_ServiceCall = tmeEnd - tmeStart;
 
             lbl_CallingFlag.Visible = false;
             lbl_CallingFlag.Refresh();
@@ -298,6 +308,9 @@ namespace CatalogViewer
                     }
 
                     int msgIdx = (idx + 1);
+
+                    dlCountTarget = msgIdx - 1;
+
                     m_CallMessage_Images = String.Concat(msgIdx.ToString(), " Catalog Images Were Returned for Article Number ", tbx_ArticleNum.Text);
                     m_CallIsError_Images = false;
 
@@ -319,15 +332,19 @@ namespace CatalogViewer
 
         private Boolean CallService_Images_Delayed()
         {
-            DateTime tmeStart = DateTime.Now;
+            dlTimeStart = DateTime.Now;
 
             int idx = 0;
             foreach (ImageList item in ds_ListView)
             {
-                using (WebClient client = new WebClient())
+                if (idx >= 1)
                 {
-                    if (idx >= 1)
+                    using (WebClient client = new WebClient())
                     {
+
+                        // Specify that the DownloadFileCallback method gets called when the download completes.
+                        client.DownloadFileCompleted += new AsyncCompletedEventHandler(DownloadFileCallback);
+
                         //Note: Async doesn't lock up the UI
                         client.DownloadFileAsync(new Uri(item.ImageURL), item.FilePathName_Full);
                     }
@@ -335,10 +352,38 @@ namespace CatalogViewer
                 idx += 1;
             }
 
-            DateTime tmeEnd = DateTime.Now;
-            tmeSpan_Downloading = tmeEnd-tmeStart;
+
 
             return true;
+
+        }
+
+        public void DownloadFileCallback(object sender, AsyncCompletedEventArgs e)
+        {
+            dlCount += 1;
+            if (dlCount >= dlCountTarget)
+            {
+                DateTime tmeEnd = DateTime.Now;
+                tmeSpan_Downloading = tmeEnd - dlTimeStart;
+                SetTimerLabel();
+            }
+        }
+
+        private void SetTimerLabel()
+        {
+
+            // InvokeRequired required compares the thread ID of the
+            // calling thread to the thread ID of the creating thread.
+            // If these threads are different, it returns true.
+            if (this.lbl_Timings.InvokeRequired)
+            {
+                SetTimerLabelCallback d = new SetTimerLabelCallback(SetTimerLabel);
+            }
+            else
+            {
+                lbl_Timings.Text = String.Concat("Service Call:", tmeSpan_ServiceCall.Milliseconds.ToString(), " ms, Downloading:", tmeSpan_Downloading.Milliseconds.ToString(), " ms, App Ready:", tmeSpan_AppReady.Milliseconds.ToString(), " ms");
+
+            }
         }
 
         private List<string> GetProductImages(string strArticleNum)

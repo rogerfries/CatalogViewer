@@ -43,6 +43,7 @@
             this.lbl_CallingFlag = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.pnl_Footer = new System.Windows.Forms.Panel();
+            this.lbl_Timings = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.btn_Exit = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
@@ -232,6 +233,7 @@
             // 
             // pnl_Footer
             // 
+            this.pnl_Footer.Controls.Add(this.lbl_Timings);
             this.pnl_Footer.Controls.Add(this.checkBox1);
             this.pnl_Footer.Controls.Add(this.btn_Exit);
             this.pnl_Footer.Controls.Add(this.label2);
@@ -242,10 +244,18 @@
             this.pnl_Footer.Size = new System.Drawing.Size(949, 35);
             this.pnl_Footer.TabIndex = 15;
             // 
+            // lbl_Timings
+            // 
+            this.lbl_Timings.AutoSize = true;
+            this.lbl_Timings.Location = new System.Drawing.Point(574, 11);
+            this.lbl_Timings.Name = "lbl_Timings";
+            this.lbl_Timings.Size = new System.Drawing.Size(0, 13);
+            this.lbl_Timings.TabIndex = 4;
+            // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(636, 10);
+            this.checkBox1.Location = new System.Drawing.Point(456, 9);
             this.checkBox1.Name = "checkBox1";
             this.checkBox1.Size = new System.Drawing.Size(115, 17);
             this.checkBox1.TabIndex = 3;
@@ -267,7 +277,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(321, 5);
+            this.label2.Location = new System.Drawing.Point(321, 10);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(132, 13);
             this.label2.TabIndex = 1;
@@ -330,6 +340,7 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.NumericUpDown num_ImageFullSize;
+        private System.Windows.Forms.Label lbl_Timings;
     }
 }
 

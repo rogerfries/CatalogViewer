@@ -21,6 +21,10 @@ namespace CatalogViewer
         public static string m_CallMessage_Images = string.Empty;
         public static Boolean m_CallIsError_Images = false;
 
+        public static TimeSpan tmeSpan_ServiceCall;
+        public static TimeSpan tmeSpan_Downloading;
+        public static TimeSpan tmeSpan_AppReady;
+
         BindingList<ImageList> ds_ListView = new BindingList<ImageList>();
         BindingList<ImageData> ds_ImageData = new BindingList<ImageData>();
 
@@ -62,6 +66,10 @@ namespace CatalogViewer
             radImageEditor1.CurrentBitmap = null;
             radImageEditor1.Refresh();
 
+            DateTime tmeStart = DateTime.Now;
+
+            lbl_Timings.Text = string.Empty;
+
             if (CallService_Images())
             {
                 radListView1.SelectedIndex = 0;
@@ -69,7 +77,7 @@ namespace CatalogViewer
                 {
                     if (CallService_AuxillaryData(tbx_ArticleNum.Text))
                     {
-                        if (BindTreeview(0)) //Filter to the first image
+                        if (BindTreeview(radListView1.SelectedIndex)) //Filter to the first image
                         {
                             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                         }
@@ -80,6 +88,10 @@ namespace CatalogViewer
             {
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
             }
+
+            DateTime tmeEnd = DateTime.Now;
+            tmeSpan_AppReady = tmeEnd-tmeStart;
+            lbl_Timings.Text = String.Concat("Service Call:", tmeSpan_ServiceCall.Milliseconds.ToString()," ms, Downloading:", tmeSpan_Downloading.Milliseconds.ToString(), " ms, App Ready:", tmeSpan_AppReady.Milliseconds.ToString(), " ms");
 
             //Display the image call message
             if (m_CallIsError_Images)
@@ -225,7 +237,12 @@ namespace CatalogViewer
             //Fetch the Image List and Load the ListView =======================================================================
 
             lbl_CallingFlag.Visible = true;
+
+            DateTime tmeStart = DateTime.Now;
             List<string> lstImageURLs = GetProductImages(tbx_ArticleNum.Text); //Call the function that calls service to get the image URL's
+            DateTime tmeEnd = DateTime.Now;
+            tmeSpan_ServiceCall = tmeEnd-tmeStart;
+
             lbl_CallingFlag.Visible = false;
             lbl_CallingFlag.Refresh();
 
@@ -264,7 +281,7 @@ namespace CatalogViewer
                         }
 
                         //Full Size image download ------------------------
-                        if (idx == 1)
+                        if (idx == 0)
                         {
                             //Download just the first full size image
                             client.DownloadFile(new Uri(strImageDownloadURL), strImageFilePathName_Full);
@@ -302,12 +319,14 @@ namespace CatalogViewer
 
         private Boolean CallService_Images_Delayed()
         {
+            DateTime tmeStart = DateTime.Now;
+
             int idx = 0;
             foreach (ImageList item in ds_ListView)
             {
                 using (WebClient client = new WebClient())
                 {
-                    if (idx > 0)
+                    if (idx >= 1)
                     {
                         //Note: Async doesn't lock up the UI
                         client.DownloadFileAsync(new Uri(item.ImageURL), item.FilePathName_Full);
@@ -315,6 +334,9 @@ namespace CatalogViewer
                 }
                 idx += 1;
             }
+
+            DateTime tmeEnd = DateTime.Now;
+            tmeSpan_Downloading = tmeEnd-tmeStart;
 
             return true;
         }
@@ -350,10 +372,17 @@ namespace CatalogViewer
         {
             if (radListView1.SelectedItems.Count >= 1)
             {
-                string ImageFileNamePath = radListView1.Items[radListView1.SelectedIndex].Value.ToString();
-                radImageEditor1.OpenImage(ImageFileNamePath);
+                try
+                {
+                    string ImageFileNamePath = radListView1.Items[radListView1.SelectedIndex].Value.ToString();
+                    radImageEditor1.OpenImage(ImageFileNamePath);
 
-                BindTreeview(radListView1.SelectedIndex); //Filter to the selected image PID
+                    BindTreeview(radListView1.SelectedIndex); //Filter to the selected image PID
+                }
+                catch
+                {
+                    MessageBox.Show("There was a problem displaying the selected product image. Please try again in a few minutes.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

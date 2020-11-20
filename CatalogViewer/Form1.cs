@@ -20,6 +20,13 @@ namespace CatalogViewer
     public partial class Form1 : Form
     {
 
+        //================================================================
+        //               *** KEEP THE VERSION HISTORY ***
+        //================================================================
+        public static string m_AppVersion_UI = "Version 1, Build 1, 11/20/2020";  //1. First release
+
+
+
         public static string m_CallMessage_Images = string.Empty;
         public static Boolean m_CallIsError_Images = false;
 
@@ -30,6 +37,7 @@ namespace CatalogViewer
         public static DateTime dlTimeStart;
         public static Boolean m_TimerIsSec = false;
 
+        public static int m_dlCountTotal = 0;
         public static int m_dlCount = 0;
 
         public static List<string> m_lstImageURLs;
@@ -45,7 +53,7 @@ namespace CatalogViewer
         public delegate void ListViewEndUpdateCallback();
         public delegate void UpdateCallMessageCallback(string strMessage, Boolean isError);
         public delegate void SetReadyIndicatorCallback(Boolean isVisible);
-        public delegate void SetCallServiceControlsCallback(Boolean isCalling);
+        public delegate void SetCallServiceControlsCallback(Boolean isCalling, Boolean bolAbortState);
         public delegate void UpdateDownloadProgressBarCallback(int value);
 
         DataSet ds_ImageDataDataset = new DataSet();
@@ -55,6 +63,8 @@ namespace CatalogViewer
         public Form1()
         {
             InitializeComponent();
+
+            lbl_AppVersion.Text = m_AppVersion_UI;
             SetupImageEditor();
             CreateImageDataset();
         }
@@ -109,24 +119,12 @@ namespace CatalogViewer
                 //Do not throw - the thread doesn't exist
             }
 
-            m_dlCount = 0;
-
-            lbl_CallMessage.Text = string.Empty;
-            lbl_CallMessage.ForeColor = Color.Green;
-            lbl_Timings.Text = string.Empty;
-            m_TimerIsSec = false;
-
-            radTreeView1.Nodes.Clear();
-            radImageEditor1.CurrentBitmap = null;
-            radImageEditor1.Refresh();
-
-            LoadListView(); //This effectelty clears the ListView since there are no thumbs downlaoded yet
-            m_dsListView.Clear(); //Clear the dataset that contains the Image URLs
-
-            SetReadyIndicator(false); //Turn off the ready indicator
+            SetReadyIndicator(true); //Turn on the ready indicator
             SetCallingIndicator(false); //Turn off the calling indicator
-            SetCallServiceControls(false); //Set the Call Service controls as Unlocked
-    }
+            SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
+            UpdateCallMessage_ThreadedDone(cbx_ArticleNum.Text);
+            UpdateTimers_ThreadedDone();
+        }
 
     private void CallService(string strArticleNum)
         {
@@ -160,7 +158,7 @@ namespace CatalogViewer
             radImageEditor1.CurrentBitmap = null;
             radImageEditor1.Refresh();
 
-            SetCallServiceControls(true); //Set the Call Service controls as Locked
+            SetCallServiceControls(true, false); //Set the Call Service controls as Locked with Abort off
 
             LoadListView(); //This effectelty clears the ListView since there are no thumbs downlaoded yet
             m_dsListView.Clear(); //Clear the dataset that contains the Image URLs
@@ -215,28 +213,24 @@ namespace CatalogViewer
             lbl_CallingFlag.Refresh();
         }
 
-        private void SetCallServiceControls(Boolean isCalling)
+        private void SetCallServiceControls(Boolean isCalling, Boolean bolAbortState)
         {
             if (isCalling)
             {
                 cbx_ArticleNum.Enabled = false;
                 btn_CallService.Enabled = false;
-                btn_Abort.Visible = true;
                 num_ImageFullSize.Enabled = false;
-
                 pb_Download.Visible = true;
             }
             else
             {
                 cbx_ArticleNum.Enabled = true;
                 btn_CallService.Enabled = true;
-                btn_Abort.Visible = false;
                 num_ImageFullSize.Enabled = true;
-
-                pb_Download.Value = 0;
-                pb_Download.Maximum = 0;
                 pb_Download.Visible = false;
             }
+
+            btn_Abort.Visible = bolAbortState;
         }
 
         private void SetReadyIndicator(Boolean isVisible)
@@ -333,7 +327,6 @@ namespace CatalogViewer
             //ProductItemSourceStandardizedCountryDistribution
             //ProductItemSourceStandardizedCountryLaunchDate
             //ProductItemSourceChange
-
 
             //ImageAssetOrder
             DataColumn dc = new DataColumn(); dc.ColumnName = "AO_pid"; dc.DataType = typeof(int); dt_AO.Columns.Add(dc);
@@ -514,6 +507,8 @@ namespace CatalogViewer
                     pb_Download.Value = m_dlCount;
 
                 }
+
+                SetCallServiceControlsFromThread(true, true); //Set the Call Service controls as Locked with Abort On
                 return true;
             }
             else
@@ -609,7 +604,7 @@ namespace CatalogViewer
             UpdateCallMessage_ThreadedDone(strArticleNum);
             UpdateTimers_ThreadedDone();
 
-            SetCallServiceControlsFromThread(false); //Set the Call Service controls as Unlocked
+            SetCallServiceControlsFromThread(false, false); //Set the Call Service controls as Unlocked with Abort off
 
         }
 
@@ -642,12 +637,14 @@ namespace CatalogViewer
             string strCallMessage = string.Empty;
             if (m_dlCount > 0)
             {
-                strCallMessage = String.Concat(m_dlCount.ToString(), " Catalog Images Were Returned for Article Number ", strArticleNum);
+                int intCnt = m_dlCount;
+                int intCntTotal = m_lstImageURLs.Count() - 1; //-1 because the image count is zero based
+                strCallMessage = String.Concat("Returned ", intCnt.ToString(), " of ", intCntTotal.ToString(), " catalog images for article ", strArticleNum);
                 UpdateCallMessageFromThread(strCallMessage, false);
             }
             else
             {
-                strCallMessage = String.Concat("No Catalog Information is Available for Article Number ", strArticleNum);
+                strCallMessage = String.Concat("No catalog information is available for article ", strArticleNum);
                 UpdateCallMessageFromThread(strCallMessage, true);
             }
 
@@ -777,12 +774,12 @@ namespace CatalogViewer
             }
         }
 
-        private void SetCallServiceControlsFromThread(Boolean isCalling)
+        private void SetCallServiceControlsFromThread(Boolean isCalling, Boolean bolAbortState)
         {
             if (this.btn_CallService.InvokeRequired)
             {
                 SetCallServiceControlsCallback d = new SetCallServiceControlsCallback(SetCallServiceControls);
-                this.Invoke(d, new object[] { isCalling });
+                this.Invoke(d, new object[] { isCalling, bolAbortState });
             }
             else
             {
@@ -792,20 +789,18 @@ namespace CatalogViewer
                     btn_CallService.Enabled = false;
                     btn_Abort.Visible = true;
                     num_ImageFullSize.Enabled = false;
-
                     pb_Download.Visible = true;
                 }
                 else
                 {
                     cbx_ArticleNum.Enabled = true;
                     btn_CallService.Enabled = true;
-                    btn_Abort.Visible = false;
                     num_ImageFullSize.Enabled = true;
-
-                    pb_Download.Value = 0;
-                    pb_Download.Maximum = 0;
                     pb_Download.Visible = false;
                 }
+
+                btn_Abort.Visible = bolAbortState;
+
             }
         }
 

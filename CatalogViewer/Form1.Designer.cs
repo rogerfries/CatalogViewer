@@ -47,6 +47,7 @@
             this.lbl_CallingFlag = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.pnl_Footer = new System.Windows.Forms.Panel();
+            this.lbl_AppVersion = new System.Windows.Forms.Label();
             this.lbl_Timings = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.btn_Exit = new System.Windows.Forms.Button();
@@ -165,9 +166,9 @@
             this.panel1.Controls.Add(this.lbl_ReadyIndicator);
             this.panel1.Controls.Add(this.lbl_CallMessage);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel1.Location = new System.Drawing.Point(587, 0);
+            this.panel1.Location = new System.Drawing.Point(575, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(362, 66);
+            this.panel1.Size = new System.Drawing.Size(374, 66);
             this.panel1.TabIndex = 15;
             // 
             // pb_Download
@@ -196,8 +197,8 @@
             // lbl_CallMessage
             // 
             this.lbl_CallMessage.AutoSize = true;
-            this.lbl_CallMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_CallMessage.Location = new System.Drawing.Point(7, 38);
+            this.lbl_CallMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 8F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_CallMessage.Location = new System.Drawing.Point(5, 40);
             this.lbl_CallMessage.Name = "lbl_CallMessage";
             this.lbl_CallMessage.Size = new System.Drawing.Size(0, 13);
             this.lbl_CallMessage.TabIndex = 7;
@@ -286,7 +287,7 @@
             this.lbl_CallingFlag.FlatStyle = System.Windows.Forms.FlatStyle.System;
             this.lbl_CallingFlag.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_CallingFlag.ForeColor = System.Drawing.Color.Yellow;
-            this.lbl_CallingFlag.Location = new System.Drawing.Point(390, 2);
+            this.lbl_CallingFlag.Location = new System.Drawing.Point(387, 2);
             this.lbl_CallingFlag.Name = "lbl_CallingFlag";
             this.lbl_CallingFlag.Size = new System.Drawing.Size(191, 24);
             this.lbl_CallingFlag.TabIndex = 6;
@@ -308,6 +309,7 @@
             // 
             // pnl_Footer
             // 
+            this.pnl_Footer.Controls.Add(this.lbl_AppVersion);
             this.pnl_Footer.Controls.Add(this.lbl_Timings);
             this.pnl_Footer.Controls.Add(this.checkBox1);
             this.pnl_Footer.Controls.Add(this.btn_Exit);
@@ -318,6 +320,16 @@
             this.pnl_Footer.Name = "pnl_Footer";
             this.pnl_Footer.Size = new System.Drawing.Size(949, 35);
             this.pnl_Footer.TabIndex = 15;
+            // 
+            // lbl_AppVersion
+            // 
+            this.lbl_AppVersion.AutoSize = true;
+            this.lbl_AppVersion.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_AppVersion.Location = new System.Drawing.Point(318, 18);
+            this.lbl_AppVersion.Name = "lbl_AppVersion";
+            this.lbl_AppVersion.Size = new System.Drawing.Size(56, 12);
+            this.lbl_AppVersion.TabIndex = 5;
+            this.lbl_AppVersion.Text = "App Version";
             // 
             // lbl_Timings
             // 
@@ -354,9 +366,10 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(318, 13);
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(318, 3);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(144, 13);
+            this.label2.Size = new System.Drawing.Size(123, 12);
             this.label2.TabIndex = 1;
             this.label2.Text = "Copyright © 2020 Richemont";
             // 
@@ -425,6 +438,7 @@
         private System.Windows.Forms.Button btn_Abort;
         private System.Windows.Forms.ProgressBar pb_Download;
         private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Label lbl_AppVersion;
     }
 }
 

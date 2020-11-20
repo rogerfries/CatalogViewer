@@ -29,17 +29,21 @@
         private void InitializeComponent()
         {
             this.label1 = new System.Windows.Forms.Label();
-            this.tbx_ArticleNum = new System.Windows.Forms.TextBox();
             this.btn_CallService = new System.Windows.Forms.Button();
             this.radImageEditor1 = new Telerik.WinControls.UI.RadImageEditor();
             this.radListView1 = new Telerik.WinControls.UI.RadListView();
             this.radTreeView1 = new Telerik.WinControls.UI.RadTreeView();
             this.radThemeManager1 = new Telerik.WinControls.RadThemeManager();
             this.pnl_ArticleCall = new System.Windows.Forms.Panel();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.pb_Download = new System.Windows.Forms.ProgressBar();
+            this.lbl_ReadyIndicator = new System.Windows.Forms.Label();
+            this.lbl_CallMessage = new System.Windows.Forms.Label();
+            this.btn_Abort = new System.Windows.Forms.Button();
+            this.cbx_ArticleNum = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.num_ImageFullSize = new System.Windows.Forms.NumericUpDown();
-            this.lbl_CallMessage = new System.Windows.Forms.Label();
             this.lbl_CallingFlag = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.pnl_Footer = new System.Windows.Forms.Panel();
@@ -52,6 +56,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.radListView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.radTreeView1)).BeginInit();
             this.pnl_ArticleCall.SuspendLayout();
+            this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.num_ImageFullSize)).BeginInit();
             this.pnl_Footer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
@@ -66,22 +71,14 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Article Number:";
             // 
-            // tbx_ArticleNum
-            // 
-            this.tbx_ArticleNum.Location = new System.Drawing.Point(84, 37);
-            this.tbx_ArticleNum.Name = "tbx_ArticleNum";
-            this.tbx_ArticleNum.Size = new System.Drawing.Size(130, 20);
-            this.tbx_ArticleNum.TabIndex = 2;
-            this.tbx_ArticleNum.Text = "CRW69011Z4";
-            // 
             // btn_CallService
             // 
             this.btn_CallService.BackColor = System.Drawing.SystemColors.Control;
             this.btn_CallService.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_CallService.ForeColor = System.Drawing.SystemColors.ControlText;
-            this.btn_CallService.Location = new System.Drawing.Point(219, 36);
+            this.btn_CallService.ForeColor = System.Drawing.Color.Green;
+            this.btn_CallService.Location = new System.Drawing.Point(193, 36);
             this.btn_CallService.Name = "btn_CallService";
-            this.btn_CallService.Size = new System.Drawing.Size(117, 23);
+            this.btn_CallService.Size = new System.Drawing.Size(109, 23);
             this.btn_CallService.TabIndex = 3;
             this.btn_CallService.Text = "Call the Service";
             this.btn_CallService.UseVisualStyleBackColor = false;
@@ -123,11 +120,12 @@
             this.radListView1.ItemSize = new System.Drawing.Size(100, 200);
             this.radListView1.Location = new System.Drawing.Point(0, 66);
             this.radListView1.Name = "radListView1";
+            this.radListView1.SelectLastAddedItem = false;
             this.radListView1.ShowColumnHeaders = false;
             this.radListView1.Size = new System.Drawing.Size(189, 416);
             this.radListView1.TabIndex = 8;
             this.radListView1.ViewType = Telerik.WinControls.UI.ListViewType.IconsView;
-            this.radListView1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.radListView1_MouseDoubleClick);
+            this.radListView1.SelectedItemChanged += new System.EventHandler(this.radListView1_SelectedItemChanged);
             // 
             // radTreeView1
             // 
@@ -145,25 +143,111 @@
             // 
             // pnl_ArticleCall
             // 
+            this.pnl_ArticleCall.Controls.Add(this.panel1);
+            this.pnl_ArticleCall.Controls.Add(this.btn_Abort);
+            this.pnl_ArticleCall.Controls.Add(this.cbx_ArticleNum);
             this.pnl_ArticleCall.Controls.Add(this.label5);
             this.pnl_ArticleCall.Controls.Add(this.label4);
             this.pnl_ArticleCall.Controls.Add(this.num_ImageFullSize);
-            this.pnl_ArticleCall.Controls.Add(this.lbl_CallMessage);
             this.pnl_ArticleCall.Controls.Add(this.lbl_CallingFlag);
             this.pnl_ArticleCall.Controls.Add(this.label3);
             this.pnl_ArticleCall.Controls.Add(this.btn_CallService);
             this.pnl_ArticleCall.Controls.Add(this.label1);
-            this.pnl_ArticleCall.Controls.Add(this.tbx_ArticleNum);
             this.pnl_ArticleCall.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnl_ArticleCall.Location = new System.Drawing.Point(0, 0);
             this.pnl_ArticleCall.Name = "pnl_ArticleCall";
             this.pnl_ArticleCall.Size = new System.Drawing.Size(949, 66);
             this.pnl_ArticleCall.TabIndex = 11;
             // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.pb_Download);
+            this.panel1.Controls.Add(this.lbl_ReadyIndicator);
+            this.panel1.Controls.Add(this.lbl_CallMessage);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Right;
+            this.panel1.Location = new System.Drawing.Point(587, 0);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(362, 66);
+            this.panel1.TabIndex = 15;
+            // 
+            // pb_Download
+            // 
+            this.pb_Download.Location = new System.Drawing.Point(3, 12);
+            this.pb_Download.Name = "pb_Download";
+            this.pb_Download.Size = new System.Drawing.Size(271, 10);
+            this.pb_Download.Step = 1;
+            this.pb_Download.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            this.pb_Download.TabIndex = 14;
+            this.pb_Download.Visible = false;
+            // 
+            // lbl_ReadyIndicator
+            // 
+            this.lbl_ReadyIndicator.AutoSize = true;
+            this.lbl_ReadyIndicator.BackColor = System.Drawing.Color.Green;
+            this.lbl_ReadyIndicator.Font = new System.Drawing.Font("Microsoft Sans Serif", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_ReadyIndicator.ForeColor = System.Drawing.Color.Yellow;
+            this.lbl_ReadyIndicator.Location = new System.Drawing.Point(278, 4);
+            this.lbl_ReadyIndicator.Name = "lbl_ReadyIndicator";
+            this.lbl_ReadyIndicator.Size = new System.Drawing.Size(79, 25);
+            this.lbl_ReadyIndicator.TabIndex = 12;
+            this.lbl_ReadyIndicator.Text = "Ready";
+            this.lbl_ReadyIndicator.Visible = false;
+            // 
+            // lbl_CallMessage
+            // 
+            this.lbl_CallMessage.AutoSize = true;
+            this.lbl_CallMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_CallMessage.Location = new System.Drawing.Point(7, 38);
+            this.lbl_CallMessage.Name = "lbl_CallMessage";
+            this.lbl_CallMessage.Size = new System.Drawing.Size(0, 13);
+            this.lbl_CallMessage.TabIndex = 7;
+            // 
+            // btn_Abort
+            // 
+            this.btn_Abort.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_Abort.ForeColor = System.Drawing.Color.Red;
+            this.btn_Abort.Location = new System.Drawing.Point(306, 36);
+            this.btn_Abort.Name = "btn_Abort";
+            this.btn_Abort.Size = new System.Drawing.Size(62, 23);
+            this.btn_Abort.TabIndex = 13;
+            this.btn_Abort.Text = "Abort";
+            this.btn_Abort.UseVisualStyleBackColor = true;
+            this.btn_Abort.Visible = false;
+            this.btn_Abort.Click += new System.EventHandler(this.btn_Abort_Click);
+            // 
+            // cbx_ArticleNum
+            // 
+            this.cbx_ArticleNum.FormattingEnabled = true;
+            this.cbx_ArticleNum.Items.AddRange(new object[] {
+            "CRWJTA0002",
+            "CRW20012C4",
+            "CRW5200024",
+            "CRW5200025",
+            "CRW6800151",
+            "CRW51007Q4",
+            "CRWGBB0008",
+            "CRWE9004Z3",
+            "CRW1529756",
+            "CRWSTA0030",
+            "CRB4036753",
+            "CRB6035517",
+            "CRB6035518",
+            "CRB6021300",
+            "CRB6035916",
+            "CRB6035816",
+            "CRB4050548",
+            "CRB6048516",
+            "CRB7219700"});
+            this.cbx_ArticleNum.Location = new System.Drawing.Point(82, 37);
+            this.cbx_ArticleNum.Name = "cbx_ArticleNum";
+            this.cbx_ArticleNum.Size = new System.Drawing.Size(107, 21);
+            this.cbx_ArticleNum.TabIndex = 11;
+            this.cbx_ArticleNum.Text = "CRWJTA0002";
+            // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(512, 39);
+            this.label5.Location = new System.Drawing.Point(543, 39);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(33, 13);
             this.label5.TabIndex = 10;
@@ -172,7 +256,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(342, 40);
+            this.label4.Location = new System.Drawing.Point(373, 40);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(105, 13);
             this.label4.TabIndex = 9;
@@ -185,7 +269,7 @@
             0,
             0,
             0});
-            this.num_ImageFullSize.Location = new System.Drawing.Point(448, 37);
+            this.num_ImageFullSize.Location = new System.Drawing.Point(479, 37);
             this.num_ImageFullSize.Maximum = new decimal(new int[] {
             99999,
             0,
@@ -194,15 +278,6 @@
             this.num_ImageFullSize.Name = "num_ImageFullSize";
             this.num_ImageFullSize.Size = new System.Drawing.Size(61, 20);
             this.num_ImageFullSize.TabIndex = 8;
-            // 
-            // lbl_CallMessage
-            // 
-            this.lbl_CallMessage.AutoSize = true;
-            this.lbl_CallMessage.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_CallMessage.Location = new System.Drawing.Point(552, 40);
-            this.lbl_CallMessage.Name = "lbl_CallMessage";
-            this.lbl_CallMessage.Size = new System.Drawing.Size(0, 13);
-            this.lbl_CallMessage.TabIndex = 7;
             // 
             // lbl_CallingFlag
             // 
@@ -247,19 +322,21 @@
             // lbl_Timings
             // 
             this.lbl_Timings.AutoSize = true;
-            this.lbl_Timings.Location = new System.Drawing.Point(569, 11);
+            this.lbl_Timings.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_Timings.Location = new System.Drawing.Point(560, 14);
             this.lbl_Timings.Name = "lbl_Timings";
-            this.lbl_Timings.Size = new System.Drawing.Size(0, 13);
+            this.lbl_Timings.Size = new System.Drawing.Size(0, 12);
             this.lbl_Timings.TabIndex = 4;
+            this.lbl_Timings.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lbl_Timings_MouseDoubleClick);
             // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(451, 9);
+            this.checkBox1.Location = new System.Drawing.Point(469, 12);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(115, 17);
+            this.checkBox1.Size = new System.Drawing.Size(83, 17);
             this.checkBox1.TabIndex = 3;
-            this.checkBox1.Text = "Show Image Menu";
+            this.checkBox1.Text = "Show Menu";
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
@@ -277,11 +354,11 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(318, 10);
+            this.label2.Location = new System.Drawing.Point(318, 13);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(132, 13);
+            this.label2.Size = new System.Drawing.Size(144, 13);
             this.label2.TabIndex = 1;
-            this.label2.Text = "Copyright 2020 Richemont";
+            this.label2.Text = "Copyright © 2020 Richemont";
             // 
             // pictureBox1
             // 
@@ -290,6 +367,7 @@
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(318, 35);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
@@ -311,6 +389,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.radTreeView1)).EndInit();
             this.pnl_ArticleCall.ResumeLayout(false);
             this.pnl_ArticleCall.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.num_ImageFullSize)).EndInit();
             this.pnl_Footer.ResumeLayout(false);
             this.pnl_Footer.PerformLayout();
@@ -322,7 +402,6 @@
         #endregion
 
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox tbx_ArticleNum;
         private System.Windows.Forms.Button btn_CallService;
         private Telerik.WinControls.UI.RadImageEditor radImageEditor1;
         private Telerik.WinControls.UI.RadListView radListView1;
@@ -341,6 +420,11 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.NumericUpDown num_ImageFullSize;
         private System.Windows.Forms.Label lbl_Timings;
+        private System.Windows.Forms.ComboBox cbx_ArticleNum;
+        private System.Windows.Forms.Label lbl_ReadyIndicator;
+        private System.Windows.Forms.Button btn_Abort;
+        private System.Windows.Forms.ProgressBar pb_Download;
+        private System.Windows.Forms.Panel panel1;
     }
 }
 

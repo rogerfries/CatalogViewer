@@ -240,6 +240,20 @@
     <EmbeddedResource Include="images\richemontlogo_aim.png" />
     <EmbeddedResource Include="images\noimageavailable.png" />
     <EmbeddedResource Include="images\noimageavailable_100.png" />
+    <None Include="images\B&amp;M.png" />
+    <Content Include="images\Cartier.png" />
+    <None Include="Resources\Cartier.png.png" />
+    <None Include="images\chloe.png" />
+    <None Include="images\dunhill.png" />
+    <None Include="images\iwc-logo.png" />
+    <None Include="images\JLC-Logo-Black.png" />
+    <None Include="images\lange_and_sohne_logo.png" />
+    <None Include="images\Mont Blanc.png" />
+    <None Include="images\Piaget-Logo-Black.png" />
+    <None Include="images\Vacheron_Logo.png" />
+    <None Include="images\VCA Logo Black.png" />
+    <None Include="images\logo_RD.png" />
+    <None Include="images\Panerai_Logo.png" />
     <Content Include="Resources\richemontlogo_aim.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

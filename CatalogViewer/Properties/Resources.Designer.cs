@@ -63,6 +63,96 @@ namespace CatalogViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap B_M_png {
+            get {
+                object obj = ResourceManager.GetObject("B_M.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Cartier_png {
+            get {
+                object obj = ResourceManager.GetObject("Cartier.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap chloe_png {
+            get {
+                object obj = ResourceManager.GetObject("chloe.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap dunhill_png {
+            get {
+                object obj = ResourceManager.GetObject("dunhill.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap iwc_logo_png {
+            get {
+                object obj = ResourceManager.GetObject("iwc_logo.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap JLC_Logo_Black_png {
+            get {
+                object obj = ResourceManager.GetObject("JLC_Logo_Black.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap lange_and_sohne_logo_png {
+            get {
+                object obj = ResourceManager.GetObject("lange_and_sohne_logo.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap logo_RD_png {
+            get {
+                object obj = ResourceManager.GetObject("logo_RD.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Mont_Blanc_png {
+            get {
+                object obj = ResourceManager.GetObject("Mont_Blanc.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap noimageavailable_100_png {
             get {
                 object obj = ResourceManager.GetObject("noimageavailable_100.png", resourceCulture);
@@ -83,9 +173,59 @@ namespace CatalogViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Panerai_Logo_png {
+            get {
+                object obj = ResourceManager.GetObject("Panerai_Logo.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Piaget_Logo_Black_png {
+            get {
+                object obj = ResourceManager.GetObject("Piaget_Logo_Black.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap richemontlogo_aim {
             get {
                 object obj = ResourceManager.GetObject("richemontlogo_aim", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap richemontlogo_aim1 {
+            get {
+                object obj = ResourceManager.GetObject("richemontlogo_aim1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Vacheron_Logo_png {
+            get {
+                object obj = ResourceManager.GetObject("Vacheron_Logo.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap VCA_Logo_Black {
+            get {
+                object obj = ResourceManager.GetObject("VCA_Logo_Black", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

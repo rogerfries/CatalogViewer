@@ -8,10 +8,12 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Resources;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CatalogViewer.Properties;
 using RichemontApiLibrary;
 using Telerik.WinControls.UI;
 
@@ -23,9 +25,8 @@ namespace CatalogViewer
         //================================================================
         //               *** KEEP THE VERSION HISTORY ***
         //================================================================
-        public static string m_AppVersion_UI = "Version 1, Build 1, 11/20/2020";  //1. First release
-
-
+        //public static string m_AppVersion_UI = "Version 1, Build 1, 11/20/2020"; //1. First release
+        public static string m_AppVersion_UI = "Version 1, Build 2, 11/23/2020"; //1. Deriving brand from Article Number. 2. Added user selectable Channel. 3. UI improvements.
 
         public static string m_CallMessage_Images = string.Empty;
         public static Boolean m_CallIsError_Images = false;
@@ -39,6 +40,7 @@ namespace CatalogViewer
 
         public static int m_dlCountTotal = 0;
         public static int m_dlCount = 0;
+        public static string m_strBrandName = string.Empty;
 
         public static List<string> m_lstImageURLs;
 
@@ -88,17 +90,16 @@ namespace CatalogViewer
 
         private void btn_CallService_Click(object sender, EventArgs e)
         {
-            //Check for Article Num entry =======================================================================
-
+            //Check for Article Num entry
             string strArticleNum = string.Empty;
-            if (cbx_ArticleNum.Text != string.Empty)
+            if (cbx_ArticleNum.Text != string.Empty & cbx_Channel.Text != string.Empty)
             {
                 CallService(cbx_ArticleNum.Text);
             }
             else
             {
                 cbx_ArticleNum.Focus();
-                MessageBox.Show("A valid Article Number is required.", "Entry Required", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("A valid Article Number and Channel are required.", "Entry Required", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
         }
@@ -109,7 +110,7 @@ namespace CatalogViewer
             //Kill a previous thumb thread if still running =======================================================================
             try
             {
-                if (_thread.ThreadState.Equals(ThreadState.Running))
+                if (_thread != null & _thread.ThreadState.Equals(ThreadState.Running))
                 {
                     _thread.Abort();
                 }
@@ -149,8 +150,10 @@ namespace CatalogViewer
 
             m_dlCount = 0;
 
-            lbl_CallMessage.Text = string.Empty;
-            lbl_CallMessage.ForeColor = Color.Green;
+            tbx_CallMessage.Text = string.Empty;
+            tbx_CallMessage.ForeColor = Color.Green;
+            tbx_CallMessage.Visible = false;
+
             lbl_Timings.Text = string.Empty;
             m_TimerIsSec = false;
 
@@ -178,12 +181,25 @@ namespace CatalogViewer
 
             SetReadyIndicator(false); //Turn off the ready indicator
             SetCallingIndicator(true); //Turn on the calling indicator
+            pb_BrandLogo.Image = null; //Clear the brand picturebox
 
-            if (CallService_AuxillaryData(cbx_ArticleNum.Text))
+            //Derive the brand data
+            Tuple<string, string, string> strBrandData = GetBrandByArticlePrefix(strArticleNum);
+            m_strBrandName = strBrandData.Item2;
+
+            if (CallService_AuxillaryData(cbx_ArticleNum.Text.Trim(), strBrandData.Item1, cbx_Channel.Text.ToUpper().Trim()))
             {
 
-                if (CallServiceImages())
+                if (CallServiceImages(cbx_ArticleNum.Text.Trim(), strBrandData.Item1, cbx_Channel.Text.ToUpper().Trim()))
                 {
+
+                    if (strBrandData.Item3 != string.Empty)
+                    {
+                        ResourceManager rm = Resources.ResourceManager;
+                        Bitmap myImage = (Bitmap)rm.GetObject(strBrandData.Item3);
+                        pb_BrandLogo.BackgroundImage = myImage;
+                    }
+
                     _thread = new Thread(() => CallServiceImages_Threaded(strArticleNum)) { IsBackground = false };
 
                     BindTreeview(0); //Before we start the thread, bind the Aux data treeview to the first image data which was loaded in CallService_Images sub
@@ -199,8 +215,28 @@ namespace CatalogViewer
             }
             else
             {
-                //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            }
+                //No Aux data returned, so reset the UI
+
+                //Kill a previous thumb thread if still running
+                try
+                {
+                    if (_thread != null & _thread.ThreadState.Equals(ThreadState.Running))
+                    {
+                        _thread.Abort();
+                    }
+                }
+                catch
+                {
+                    //Do not throw - the thread doesn't exist
+                }
+
+                SetReadyIndicator(false); //Turn off the ready indicator
+                SetCallingIndicator(false); //Turn off the calling indicator
+                SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
+                UpdateCallMessage_ThreadedDone(cbx_ArticleNum.Text);
+                UpdateTimers_ThreadedDone();
+
+        }
 
             DateTime tmeEnd = DateTime.Now;
             m_tmeSpan_AppReady = tmeEnd - tmeStart;
@@ -218,6 +254,7 @@ namespace CatalogViewer
             if (isCalling)
             {
                 cbx_ArticleNum.Enabled = false;
+                cbx_Channel.Enabled = false;
                 btn_CallService.Enabled = false;
                 num_ImageFullSize.Enabled = false;
                 pb_Download.Visible = true;
@@ -225,6 +262,7 @@ namespace CatalogViewer
             else
             {
                 cbx_ArticleNum.Enabled = true;
+                cbx_Channel.Enabled = true;
                 btn_CallService.Enabled = true;
                 num_ImageFullSize.Enabled = true;
                 pb_Download.Visible = false;
@@ -415,7 +453,7 @@ namespace CatalogViewer
 
         #region "Images ===================================================================================================================="
 
-        private Boolean CallServiceImages()
+        private Boolean CallServiceImages(string strArticleNum, string strBrand, string strChannel)
         {
 
             // Set local variables =======================================================================
@@ -432,13 +470,9 @@ namespace CatalogViewer
             //Fetch the Image List from the Service =======================================================================
 
             DateTime tmeStart = DateTime.Now;
-            m_lstImageURLs = GetProductImages(cbx_ArticleNum.Text); //Call the function that calls service to get the image URL's
+            m_lstImageURLs = GetProductImages(strArticleNum, strBrand, strChannel); //Call the function that calls service to get the image URL's
             DateTime tmeEnd = DateTime.Now;
             m_tmeSpan_ServiceCall = tmeEnd - tmeStart;
-
-            //Update the progressbar
-            pb_Download.Value = 0;
-            pb_Download.Maximum = m_lstImageURLs.Count();
 
             //Load the ListView with just the first image =======================================================================
 
@@ -447,6 +481,10 @@ namespace CatalogViewer
 
             if (m_lstImageURLs != null)
             {
+
+                //Update the progressbar
+                pb_Download.Value = 0;
+                pb_Download.Maximum = m_lstImageURLs.Count();
 
                 string strImageUrl = m_lstImageURLs[0]; //Note: Fetching image URL at index 0
 
@@ -639,16 +677,23 @@ namespace CatalogViewer
             {
                 int intCnt = m_dlCount;
                 int intCntTotal = m_lstImageURLs.Count() - 1; //-1 because the image count is zero based
-                strCallMessage = String.Concat("Returned ", intCnt.ToString(), " of ", intCntTotal.ToString(), " catalog images for article ", strArticleNum);
+                strCallMessage = String.Concat("Returned ", intCnt.ToString(), " of ", intCntTotal.ToString(), " ", m_strBrandName, " catalog images for article ", strArticleNum);
                 UpdateCallMessageFromThread(strCallMessage, false);
             }
             else
             {
-                strCallMessage = String.Concat("No catalog information is available for article ", strArticleNum);
+                strCallMessage = String.Concat("No ", m_strBrandName, " catalog information is available for article ", strArticleNum);
                 UpdateCallMessageFromThread(strCallMessage, true);
             }
 
-            SetReadyIndicatorFromThread(true); //Turn on the ready indicator
+            if (m_dlCount > 0)
+            {
+                SetReadyIndicatorFromThread(true); //Turn on the ready indicator
+            }
+            else
+            {
+                SetReadyIndicatorFromThread(false); //Turn off the ready indicator
+            }
 
         }
 
@@ -716,22 +761,23 @@ namespace CatalogViewer
 
         private void UpdateCallMessageFromThread(string strMessage, Boolean isError)
         {
-            if (this.lbl_CallMessage.InvokeRequired)
+            if (this.tbx_CallMessage.InvokeRequired)
             {
                 UpdateCallMessageCallback d = new UpdateCallMessageCallback(UpdateCallMessageFromThread);
                 this.Invoke(d, new object[] { strMessage, isError });
             }
             else
             {
-                lbl_CallMessage.Text = strMessage;
+                tbx_CallMessage.Text = strMessage;
                 if (isError)
                 {
-                    lbl_CallMessage.ForeColor = Color.Red;
+                    tbx_CallMessage.ForeColor = Color.Red;
                 }
                 else
                 {
-                    lbl_CallMessage.ForeColor = Color.Green;
+                    tbx_CallMessage.ForeColor = Color.Green;
                 }
+                tbx_CallMessage.Visible = true;
             }
         }
 
@@ -786,6 +832,7 @@ namespace CatalogViewer
                 if (isCalling)
                 {
                     cbx_ArticleNum.Enabled = false;
+                    cbx_Channel.Enabled = false;
                     btn_CallService.Enabled = false;
                     btn_Abort.Visible = true;
                     num_ImageFullSize.Enabled = false;
@@ -794,26 +841,27 @@ namespace CatalogViewer
                 else
                 {
                     cbx_ArticleNum.Enabled = true;
+                    cbx_Channel.Enabled = true;
                     btn_CallService.Enabled = true;
                     num_ImageFullSize.Enabled = true;
                     pb_Download.Visible = false;
                 }
 
                 btn_Abort.Visible = bolAbortState;
-
             }
         }
 
-        private List<string> GetProductImages(string strArticleNum)
+        private List<string> GetProductImages(string strArticleNum, string strBrand, string strChannel)
         {
             try
             {
+
                 var apiService = new RichemontApiLibrary.ProductCatalogApi();
                 var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
                 {
                     Article = strArticleNum,
-                    Brand = "CAR",
-                    Channel = "WEB",
+                    Brand = strBrand,
+                    Channel = strChannel,
                     Language = "en",
                     FromResult = 0,
                     PageSize = 10
@@ -829,6 +877,36 @@ namespace CatalogViewer
                 return null;
             }
 
+        }
+
+        private Tuple<string,string,string> GetBrandByArticlePrefix(string strArticleNum)
+        {
+            string strBrand = string.Empty;
+            string strBrandName = string.Empty;
+            string strBrandLogoResourceName = string.Empty;
+
+            //Obtain the brand prefix from the Article Number
+            string strPrefix = strArticleNum.Substring(0, 2);
+
+            //Assemble what the app.config should look like
+            string strConfigKey = string.Concat("BrandCrossReference.", strPrefix);
+
+            //Fetch the brand value from app.config
+            string strAppConfigValue = ConfigurationManager.AppSettings[strConfigKey];
+
+            string[] strAppConfigValueSplit = strAppConfigValue.Split(';');
+            strBrand = strAppConfigValueSplit[0];
+            strBrandName = strAppConfigValueSplit[1];
+            strBrandLogoResourceName = strAppConfigValueSplit[2];
+
+            if (strBrand != string.Empty)
+            {
+                return Tuple.Create(strBrand, strBrandName, strBrandLogoResourceName);
+            }
+            else
+            {
+                return Tuple.Create(strBrand, string.Empty, string.Empty); //Return the Artcile Number prefix if the App.config key fetch fails - better than nothing
+            }
         }
 
         private void radListView1_SelectedItemChanged(object sender, EventArgs e)
@@ -953,14 +1031,8 @@ namespace CatalogViewer
 
         #region "Auxillary Data ===================================================================================================================================="
 
-        private Boolean CallService_AuxillaryData(string strArticleNum)
+        private Boolean CallService_AuxillaryData(string strArticleNum, string strBrand, string strChannel)
         {
-
-            //ds_ImageData.Add(new ImageData(1, //ID
-            //                               "ASSET_ORDER", "1", //ImageAssetOrder
-            //                               "DAM_MTYP_IMAGE", "IMAGE_TYPE", "Image", //ImageType
-            //                               "DAM_MTYP_IMAGE", "akamai:default", @"https://mediastorage.richemont.com/damdatastore/QuA/car/11/72/1172505.png") //ImagePublicUrl
-
 
             //Fetch the Auxillary Data and Load the Treeview =======================================================================
             ds_ImageDataDataset.Clear();
@@ -971,8 +1043,8 @@ namespace CatalogViewer
                 var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
                 {
                     Article = strArticleNum,
-                    Brand = "CAR",
-                    Channel = "WEB",
+                    Brand = strBrand,
+                    Channel = strChannel,
                     Language = "en",
                     FromResult = 0,
                     PageSize = 10
@@ -995,8 +1067,16 @@ namespace CatalogViewer
                         //ImageAssetOrder
                         DataRow dr_AO = ds_ImageDataDataset.Tables["dt_AO"].NewRow();
                         dr_AO[0] = id; //To "pid" datacolumn
-                        dr_AO[1] = imgItem.AssetOrder.Field;
-                        dr_AO[2] = imgItem.AssetOrder.Value;
+                        if (imgItem.AssetOrder == null)
+                        {
+                            dr_AO[1] = "ImageAssetOrder"; //Field
+                            dr_AO[2] = id; //Value
+                        }
+                        else
+                        {
+                            dr_AO[1] = imgItem.AssetOrder.Field;
+                            dr_AO[2] = imgItem.AssetOrder.Value;
+                        }
                         ds_ImageDataDataset.Tables["dt_AO"].Rows.Add(dr_AO);
 
                         foreach (var imgTypes in imgItem.ImageTypes)
@@ -1135,7 +1215,10 @@ namespace CatalogViewer
             return node;
         }
 
+        private void btn_CallService_Click_1(object sender, EventArgs e)
+        {
 
+        }
     }
 }
     #endregion

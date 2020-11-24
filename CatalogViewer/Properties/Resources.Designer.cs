@@ -93,9 +93,59 @@ namespace CatalogViewer.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap DocViewHS_png {
+            get {
+                object obj = ResourceManager.GetObject("DocViewHS.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap dunhill_png {
             get {
                 object obj = ResourceManager.GetObject("dunhill.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Flag_blueHS_png {
+            get {
+                object obj = ResourceManager.GetObject("Flag_blueHS.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Flag_greenHS_png {
+            get {
+                object obj = ResourceManager.GetObject("Flag_greenHS.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Flag_redHS_png {
+            get {
+                object obj = ResourceManager.GetObject("Flag_redHS.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap FolderHS_png {
+            get {
+                object obj = ResourceManager.GetObject("FolderHS.png", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -116,6 +166,16 @@ namespace CatalogViewer.Properties {
         internal static System.Drawing.Bitmap JLC_Logo_Black_png {
             get {
                 object obj = ResourceManager.GetObject("JLC_Logo_Black.png", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap KeyHS_png {
+            get {
+                object obj = ResourceManager.GetObject("KeyHS.png", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

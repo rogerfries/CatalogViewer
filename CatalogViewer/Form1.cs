@@ -26,10 +26,16 @@ namespace CatalogViewer
         //               *** KEEP THE VERSION HISTORY ***
         //================================================================
         //public static string m_AppVersion_UI = "Version 1, Build 1, 11/20/2020"; //1. First release
-        public static string m_AppVersion_UI = "Version 1, Build 2, 11/23/2020"; //1. Deriving brand from Article Number. 2. Added user selectable Channel. 3. UI improvements.
+        //public static string m_AppVersion_UI = "Version 1, Build 2, 11/23/2020"; //1. Deriving brand from Article Number. 2. Added user selectable Channel. 3. UI improvements.
+        public static string m_AppVersion_UI = "Version 1, Build 3, 11/24/2020"; //1. Added logging with some try/catches. 2. Added BOM data. 3. Added treeview node icons.
+
 
         public static string m_CallMessage_Images = string.Empty;
         public static Boolean m_CallIsError_Images = false;
+        public static Boolean m_UserAborted = false;
+
+        public static string m_UserArticleNumber = string.Empty;
+        public static string m_UserChannel = string.Empty;
 
         public static TimeSpan m_tmeSpan_ServiceCall;
         public static TimeSpan m_tmeSpan_DLThread;
@@ -57,10 +63,19 @@ namespace CatalogViewer
         public delegate void SetReadyIndicatorCallback(Boolean isVisible);
         public delegate void SetCallServiceControlsCallback(Boolean isCalling, Boolean bolAbortState);
         public delegate void UpdateDownloadProgressBarCallback(int value);
+        public delegate void WriteLoggerCallback(string strLogEntry);
 
         DataSet ds_ImageDataDataset = new DataSet();
 
         public Thread _thread;
+
+        //Treeview Icons
+        public static Bitmap m_imgFolder;
+        public static Bitmap m_imgFlag_red;
+        public static Bitmap m_imgFlag_green;
+        public static Bitmap m_imgFlag_blue;
+        public static Bitmap m_imgKeyHS;
+        public static Bitmap m_imgDocViewHS;
 
         public Form1()
         {
@@ -69,7 +84,15 @@ namespace CatalogViewer
             lbl_AppVersion.Text = m_AppVersion_UI;
             SetupImageEditor();
             CreateImageDataset();
-        }
+
+            ResourceManager rm = Resources.ResourceManager;
+            m_imgFolder = (Bitmap)rm.GetObject("FolderHS.png");
+            m_imgFlag_red = (Bitmap)rm.GetObject("Flag_redHS.png");
+            m_imgFlag_green = (Bitmap)rm.GetObject("Flag_greenHS.png");
+            m_imgFlag_blue = (Bitmap)rm.GetObject("Flag_blueHS.png");
+            m_imgKeyHS = (Bitmap)rm.GetObject("KeyHS.png");
+            m_imgDocViewHS = (Bitmap)rm.GetObject("DocViewHS.png");
+    }
 
         #region "Main Program ===================================================================================================================="
 
@@ -94,7 +117,9 @@ namespace CatalogViewer
             string strArticleNum = string.Empty;
             if (cbx_ArticleNum.Text != string.Empty & cbx_Channel.Text != string.Empty)
             {
-                CallService(cbx_ArticleNum.Text);
+                m_UserArticleNumber = cbx_ArticleNum.Text.ToUpper().Trim();
+                m_UserChannel = cbx_Channel.Text.ToUpper().Trim();
+                CallService();
             }
             else
             {
@@ -113,6 +138,7 @@ namespace CatalogViewer
                 if (_thread != null & _thread.ThreadState.Equals(ThreadState.Running))
                 {
                     _thread.Abort();
+                    m_UserAborted = true;
                 }
             }
             catch
@@ -123,17 +149,17 @@ namespace CatalogViewer
             SetReadyIndicator(true); //Turn on the ready indicator
             SetCallingIndicator(false); //Turn off the calling indicator
             SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
-            UpdateCallMessage_ThreadedDone(cbx_ArticleNum.Text);
+            UpdateCallMessage_ThreadedDone(m_UserArticleNumber);
             UpdateTimers_ThreadedDone();
         }
 
-    private void CallService(string strArticleNum)
+        private void CallService()
         {
 
             //Kill a previous thumb thread if still running =======================================================================
             try
             {
-                if(_thread != null)
+                if (_thread != null)
                 {
                     if (_thread.ThreadState.Equals(ThreadState.Running))
                     {
@@ -149,6 +175,7 @@ namespace CatalogViewer
             //Prep variables and controls =======================================================================
 
             m_dlCount = 0;
+            m_UserAborted = false;
 
             tbx_CallMessage.Text = string.Empty;
             tbx_CallMessage.ForeColor = Color.Green;
@@ -182,17 +209,15 @@ namespace CatalogViewer
             SetReadyIndicator(false); //Turn off the ready indicator
             SetCallingIndicator(true); //Turn on the calling indicator
             pb_BrandLogo.Image = null; //Clear the brand picturebox
-
+           
             //Derive the brand data
-            Tuple<string, string, string> strBrandData = GetBrandByArticlePrefix(strArticleNum);
+            Tuple<string, string, string> strBrandData = GetBrandByArticlePrefix(m_UserArticleNumber);
             m_strBrandName = strBrandData.Item2;
 
-            if (CallService_AuxillaryData(cbx_ArticleNum.Text.Trim(), strBrandData.Item1, cbx_Channel.Text.ToUpper().Trim()))
+            if (CallService_AuxillaryData(m_UserArticleNumber, strBrandData.Item1, m_UserChannel))
             {
-
-                if (CallServiceImages(cbx_ArticleNum.Text.Trim(), strBrandData.Item1, cbx_Channel.Text.ToUpper().Trim()))
+                if (CallServiceImages(m_UserArticleNumber, strBrandData.Item1, m_UserChannel))
                 {
-
                     if (strBrandData.Item3 != string.Empty)
                     {
                         ResourceManager rm = Resources.ResourceManager;
@@ -200,23 +225,20 @@ namespace CatalogViewer
                         pb_BrandLogo.BackgroundImage = myImage;
                     }
 
-                    _thread = new Thread(() => CallServiceImages_Threaded(strArticleNum)) { IsBackground = false };
-
+                    _thread = new Thread(() => CallServiceImages_Threaded(m_UserArticleNumber)) { IsBackground = false };
                     BindTreeview(0); //Before we start the thread, bind the Aux data treeview to the first image data which was loaded in CallService_Images sub
-
                     SetCallingIndicator(false); //Turn off the calling indicator (before starting the thread)
-
                     _thread.Start();
                 }
                 else
                 {
                     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 }
+
             }
             else
             {
                 //No Aux data returned, so reset the UI
-
                 //Kill a previous thumb thread if still running
                 try
                 {
@@ -235,8 +257,7 @@ namespace CatalogViewer
                 SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
                 UpdateCallMessage_ThreadedDone(cbx_ArticleNum.Text);
                 UpdateTimers_ThreadedDone();
-
-        }
+            }
 
             DateTime tmeEnd = DateTime.Now;
             m_tmeSpan_AppReady = tmeEnd - tmeStart;
@@ -325,9 +346,9 @@ namespace CatalogViewer
             }
             else
             {
-                double dblServiceCall = m_tmeSpan_ServiceCall.TotalMilliseconds/1000;
-                double dblDLThread = m_tmeSpan_DLThread.TotalMilliseconds/1000;
-                double dblAppReady = m_tmeSpan_AppReady.TotalMilliseconds/1000;
+                double dblServiceCall = m_tmeSpan_ServiceCall.TotalMilliseconds / 1000;
+                double dblDLThread = m_tmeSpan_DLThread.TotalMilliseconds / 1000;
+                double dblAppReady = m_tmeSpan_AppReady.TotalMilliseconds / 1000;
                 strTimerMessage = String.Concat("Service Call:", dblServiceCall.ToString("#.#"), " sec, DL Thread:", dblDLThread.ToString("#.#"), " sec, App Ready:", dblAppReady.ToString("#.#"), " sec");
             }
 
@@ -366,35 +387,38 @@ namespace CatalogViewer
             //ProductItemSourceStandardizedCountryLaunchDate
             //ProductItemSourceChange
 
+            //Bill of Material (BOM)
+            DataTable dt_BOM = new DataTable(); dt_BOM.TableName = "dt_BOM";
+
             //ImageAssetOrder
-            DataColumn dc = new DataColumn(); dc.ColumnName = "AO_pid"; dc.DataType = typeof(int); dt_AO.Columns.Add(dc);
+            DataColumn dc = new DataColumn(); dc.ColumnName = "AO_pid"; dc.DataType = typeof(Int32); dt_AO.Columns.Add(dc);
             DataColumn dc1 = new DataColumn(); dc1.ColumnName = "AO_Field"; dc1.DataType = typeof(string); dt_AO.Columns.Add(dc1);
             DataColumn dc2 = new DataColumn(); dc2.ColumnName = "AO_Value"; dc2.DataType = typeof(string); dt_AO.Columns.Add(dc2);
             ds_ImageDataDataset.Tables.Add(dt_AO);
 
             //ImageType
-            DataColumn dc3 = new DataColumn(); dc3.ColumnName = "IT_id"; dc3.DataType = typeof(int); dt_IT.Columns.Add(dc3);
+            DataColumn dc3 = new DataColumn(); dc3.ColumnName = "IT_id"; dc3.DataType = typeof(Int32); dt_IT.Columns.Add(dc3);
             DataColumn dc4 = new DataColumn(); dc4.ColumnName = "IT_Code"; dc4.DataType = typeof(string); dt_IT.Columns.Add(dc4);
             DataColumn dc5 = new DataColumn(); dc5.ColumnName = "IT_Field"; dc5.DataType = typeof(string); dt_IT.Columns.Add(dc5);
             DataColumn dc6 = new DataColumn(); dc6.ColumnName = "IT_Value"; dc6.DataType = typeof(string); dt_IT.Columns.Add(dc6);
             ds_ImageDataDataset.Tables.Add(dt_IT);
 
             //ImagePublicUrl
-            DataColumn dc7 = new DataColumn(); dc7.ColumnName = "PU_id"; dc7.DataType = typeof(int); dt_PU.Columns.Add(dc7);
+            DataColumn dc7 = new DataColumn(); dc7.ColumnName = "PU_id"; dc7.DataType = typeof(Int32); dt_PU.Columns.Add(dc7);
             DataColumn dc8 = new DataColumn(); dc8.ColumnName = "PU_Code"; dc8.DataType = typeof(string); dt_PU.Columns.Add(dc8);
             DataColumn dc9 = new DataColumn(); dc9.ColumnName = "PU_Field"; dc9.DataType = typeof(string); dt_PU.Columns.Add(dc9);
             DataColumn dc10 = new DataColumn(); dc10.ColumnName = "PU_Value"; dc10.DataType = typeof(string); dt_PU.Columns.Add(dc10);
             ds_ImageDataDataset.Tables.Add(dt_PU);
 
             //StandardizedArticleType
-            DataColumn dc11 = new DataColumn(); dc11.ColumnName = "SAT_id"; dc11.DataType = typeof(int); dt_SAT.Columns.Add(dc11);
+            DataColumn dc11 = new DataColumn(); dc11.ColumnName = "SAT_id"; dc11.DataType = typeof(Int32); dt_SAT.Columns.Add(dc11);
             DataColumn dc12 = new DataColumn(); dc12.ColumnName = "SAT_Code"; dc12.DataType = typeof(string); dt_SAT.Columns.Add(dc12);
             DataColumn dc13 = new DataColumn(); dc13.ColumnName = "SAT_Field"; dc13.DataType = typeof(string); dt_SAT.Columns.Add(dc13);
             DataColumn dc14 = new DataColumn(); dc14.ColumnName = "SAT_Value"; dc14.DataType = typeof(string); dt_SAT.Columns.Add(dc14);
             ds_ImageDataDataset.Tables.Add(dt_SAT);
 
             //ProductItemSourceMarket
-            DataColumn dc15 = new DataColumn(); dc15.ColumnName = "PSM_id"; dc15.DataType = typeof(int); dt_PSM.Columns.Add(dc15);
+            DataColumn dc15 = new DataColumn(); dc15.ColumnName = "PSM_id"; dc15.DataType = typeof(Int32); dt_PSM.Columns.Add(dc15);
             DataColumn dc16 = new DataColumn(); dc16.ColumnName = "PSM_Code"; dc16.DataType = typeof(string); dt_PSM.Columns.Add(dc16);
             DataColumn dc17 = new DataColumn(); dc17.ColumnName = "PSM_Value"; dc17.DataType = typeof(string); dt_PSM.Columns.Add(dc17);
             ds_ImageDataDataset.Tables.Add(dt_PSM);
@@ -408,6 +432,16 @@ namespace CatalogViewer
             //ProductItemSourceStandardizedCountryLaunchDate
             //ProductItemSourceChange
 
+            //Biil of Material (BOM)
+            DataColumn dc94 = new DataColumn(); dc94.ColumnName = "BOM_pid"; dc94.DataType = typeof(Int32); dt_BOM.Columns.Add(dc94);
+            DataColumn dc95 = new DataColumn(); dc95.ColumnName = "BOM_Children"; dc95.DataType = typeof(string); dt_BOM.Columns.Add(dc95);
+            DataColumn dc96 = new DataColumn(); dc96.ColumnName = "BOM_Component"; dc96.DataType = typeof(string); dt_BOM.Columns.Add(dc96);
+            DataColumn dc97 = new DataColumn(); dc97.ColumnName = "BOM_Id"; dc97.DataType = typeof(string); dt_BOM.Columns.Add(dc97);
+            DataColumn dc98 = new DataColumn(); dc98.ColumnName = "BOM_Label"; dc98.DataType = typeof(string); dt_BOM.Columns.Add(dc98);
+            DataColumn dc99 = new DataColumn(); dc99.ColumnName = "BOM_Quantity"; dc99.DataType = typeof(Int32); dt_BOM.Columns.Add(dc99);
+
+            ds_ImageDataDataset.Tables.Add(dt_BOM);
+
             DataColumn parentColumn = ds_ImageDataDataset.Tables["dt_AO"].Columns["AO_pid"];
             DataColumn childColumn_IT = ds_ImageDataDataset.Tables["dt_IT"].Columns["IT_id"];
             DataColumn childColumn_PU = ds_ImageDataDataset.Tables["dt_PU"].Columns["PU_id"];
@@ -417,6 +451,7 @@ namespace CatalogViewer
             // Create table Relations
 
             //Table AO is the parent table to all other tables
+            //Note: There is no child relationship for the BOM data
 
             //ImageType - child to table AO
             DataRelation drGlobalVar_IT;
@@ -446,7 +481,6 @@ namespace CatalogViewer
             //ProductItemSourceStandardizedCountryDistribution
             //ProductItemSourceStandardizedCountryLaunchDate
             //ProductItemSourceChange
-
         }
 
         #endregion
@@ -631,7 +665,7 @@ namespace CatalogViewer
 
                     m_dlCount += 1;
 
-                    UpdateDownloadProgressBarFromThread(m_dlCount+1);
+                    UpdateDownloadProgressBarFromThread(m_dlCount + 1);
 
                 }
             }
@@ -703,8 +737,12 @@ namespace CatalogViewer
             int intServiceCall = Convert.ToInt32(m_tmeSpan_ServiceCall.TotalMilliseconds);
             int intDLThread = Convert.ToInt32(m_tmeSpan_DLThread.TotalMilliseconds);
             int intAppReady = Convert.ToInt32(m_tmeSpan_AppReady.TotalMilliseconds);
+
             string strTimerMessage = String.Concat("Service Call:", intServiceCall.ToString("#,##0"), " ms, DL Thread:", intDLThread.ToString("#,##0"), " ms, App Ready:", intAppReady.ToString("#,##0"), " ms");
             SetTimerLabelFromThread(strTimerMessage);
+
+            string strLogEntry = String.Concat("Service Called (Aux Data Thread Completed): ", "AN:", m_UserArticleNumber, ", CH:", m_UserChannel, ", ImageCount:", m_dlCount.ToString(), ", User Aborted:", m_UserAborted.ToString());
+            WriteLoggerFromThread(strLogEntry);
         }
 
         private void ListViewBeginUpdateFromThread()
@@ -778,6 +816,20 @@ namespace CatalogViewer
                     tbx_CallMessage.ForeColor = Color.Green;
                 }
                 tbx_CallMessage.Visible = true;
+            }
+        }
+
+        private void WriteLoggerFromThread(string strLogEntry)
+        {
+            if (this.tbx_CallMessage.InvokeRequired)
+            {
+                WriteLoggerCallback d = new WriteLoggerCallback(WriteLoggerFromThread);
+                this.Invoke(d, new object[] { strLogEntry });
+            }
+            else
+            {
+                Logger _logger = new Logger();
+                _logger.Log(strLogEntry);
             }
         }
 
@@ -855,7 +907,6 @@ namespace CatalogViewer
         {
             try
             {
-
                 var apiService = new RichemontApiLibrary.ProductCatalogApi();
                 var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
                 {
@@ -869,17 +920,15 @@ namespace CatalogViewer
 
                 var images = apiService.GetStandardizedProductImages(request);
                 return images;
-
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error occurred: " + ex.Message);
                 return null;
             }
-
         }
 
-        private Tuple<string,string,string> GetBrandByArticlePrefix(string strArticleNum)
+        private Tuple<string, string, string> GetBrandByArticlePrefix(string strArticleNum)
         {
             string strBrand = string.Empty;
             string strBrandName = string.Empty;
@@ -953,7 +1002,7 @@ namespace CatalogViewer
             radListView1.AllowArbitraryItemHeight = true;
 
             radListView1.ViewType = ListViewType.IconsView;
-            //            ((IconListViewElement)this.radListView1.ListViewElement.ViewElement).Orientation = Orientation.Vertical;
+            ((IconListViewElement)this.radListView1.ListViewElement.ViewElement).Orientation = Orientation.Vertical;
 
             radListView1.AllowEdit = false;
             radListView1.AllowRemove = false;
@@ -1034,30 +1083,42 @@ namespace CatalogViewer
         private Boolean CallService_AuxillaryData(string strArticleNum, string strBrand, string strChannel)
         {
 
-            //Fetch the Auxillary Data and Load the Treeview =======================================================================
-            ds_ImageDataDataset.Clear();
+            var apiService = new RichemontApiLibrary.ProductCatalogApi();
+            var result = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Response();
+            var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
+            {
+                Article = strArticleNum,
+                Brand = strBrand,
+                Channel = strChannel,
+                Language = "en",
+                FromResult = 0,
+                PageSize = 10
+            };
 
             try
             {
-                var apiService = new RichemontApiLibrary.ProductCatalogApi();
-                var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
-                {
-                    Article = strArticleNum,
-                    Brand = strBrand,
-                    Channel = strChannel,
-                    Language = "en",
-                    FromResult = 0,
-                    PageSize = 10
-                };
-
-                var result = apiService.GetStandardizedProduct(request);
+                result = apiService.GetStandardizedProduct(request);
                 if (result == null)
                 {
                     //If we get no data back bail out now - calling sub handles UI message
                     return false;
                 }
+            }
+            catch (Exception ex)
+            {
+                Logger _logger = new Logger();
+                _logger.Log(String.Concat("Error at CallService_AuxillaryData, AN:", m_UserArticleNumber, ", CN:", m_UserChannel, ", ex.Message:", ex.Message));
 
-                int id = 0;
+                //If we error, log the error and bail out now
+                return false;
+            }
+
+            //Fetch the Auxillary Data and Load the Treeview =======================================================================
+            ds_ImageDataDataset.Clear();
+            int id = 0;
+
+            try
+            {
                 foreach (var HitItem in result.Hits.Hits)
                 {
                     var ImageItem = HitItem.Source.Images;
@@ -1097,10 +1158,6 @@ namespace CatalogViewer
                         dr_PU[3] = imgItem.PublicUrl.Value;
                         ds_ImageDataDataset.Tables["dt_PU"].Rows.Add(dr_PU);
 
-
-
-
-
                         ////StandardizedArticleType
                         //DataRow dr_SAT = ds_ImageDataDataset.Tables["dt_SAT"].NewRow();
                         //dr_SAT[0] = id; //To "id" datacolumn
@@ -1115,8 +1172,6 @@ namespace CatalogViewer
                         //dr_PSM[3] = imgItem.PublicUrl.Value;
                         //ds_ImageDataDataset.Tables["dt_PSM"].Rows.Add(dr_PSM);
 
-
-
                         //ProductItemSourceMarketValues
                         //ProductItemSourceMarketAvailability
                         //ProductItemSourceMarketAvailabilityWeb
@@ -1126,12 +1181,23 @@ namespace CatalogViewer
                         //ProductItemSourceStandardizedCountryLaunchDate
                         //ProductItemSourceChange
 
-
+                        var BomItem =  HitItem.Source.Bom;
+                        foreach (var bomItem in BomItem)
+                        {
+                            //Bill of Material (BOM)
+                            DataRow dr_BOM = ds_ImageDataDataset.Tables["dt_BOM"].NewRow();
+                            dr_BOM[0] = id; //To "pid" datacolumn
+                            dr_BOM[1] = bomItem.Children;
+                            dr_BOM[2] = bomItem.Component;
+                            dr_BOM[3] = bomItem.Id;
+                            dr_BOM[4] = bomItem.Label;
+                            dr_BOM[5] = bomItem.Quantity;
+                            ds_ImageDataDataset.Tables["dt_BOM"].Rows.Add(dr_BOM);
+                        }
 
                         id += 1;
-                    }
-                }
-
+                    } //foreach (var imgItem in ImageItem)
+                } //foreach (var HitItem in result.Hits.Hits)
             }
             catch (Exception ex)
             {
@@ -1140,7 +1206,7 @@ namespace CatalogViewer
                 return false;
             }
 
-            return true;
+           return true;
 
         }
 
@@ -1157,13 +1223,58 @@ namespace CatalogViewer
             {
                 if (!dbRow.IsNull("AO_pid"))
                 {
-                    if (dbRow["AO_Value"].ToString() == intImagePID.ToString())
+                    if (dbRow["AO_Value"].ToString() == intImagePID.ToString()) //Only display tree data for the currently selected image
                     {
-                        RadTreeNode node = CreateNode(dbRow["AO_Value"].ToString(), true, dbRow["AO_pid"].ToString());
-                        node.ToolTipText = "Asset Order";
+                        RadTreeNode node = CreateNode("Product Information", true, dbRow["AO_pid"].ToString());
+                        node.ToolTipText = "Product Information";
+                        node.Image = m_imgFolder;
                         radTreeView1.Nodes.Add(node);
                         RecursivelyPopulate(dbRow, node);
                     }
+                }
+            }
+
+            //Bill of Material (BOM) - Parent Treeview Node
+            foreach (DataRow dbRow_p in ds_ImageDataDataset.Tables["dt_BOM"].Rows)
+            {
+                if (dbRow_p["BOM_pid"].ToString() == intImagePID.ToString()) //Only display tree data for the currently selected image
+                {
+                    RadTreeNode node = CreateNode("Bill of Materials", true, dbRow_p["BOM_pid"].ToString());
+                    node.ToolTipText = "Bill of Materials";
+                    node.Image = m_imgFolder;
+                    radTreeView1.Nodes.Add(node);
+
+                    foreach (DataRow dbRow_c in ds_ImageDataDataset.Tables["dt_BOM"].Rows)
+                    {
+                        if (dbRow_c["BOM_pid"].ToString() == intImagePID.ToString()) //Only display tree data for the currently selected image
+                        {
+                            RadTreeNode childNode = CreateNode(dbRow_c["BOM_Children"].ToString(), false, dbRow_c["BOM_Children"].ToString());
+                            childNode.ToolTipText = "Children";
+                            childNode.Image = m_imgFlag_red;
+                            node.Nodes.Add(childNode);
+
+                            childNode = CreateNode(dbRow_c["BOM_Component"].ToString(), false, dbRow_c["BOM_Component"].ToString());
+                            childNode.ToolTipText = "Component";
+                            childNode.Image = m_imgFlag_green;
+                            node.Nodes.Add(childNode);
+
+                            childNode = CreateNode(dbRow_c["BOM_Id"].ToString(), false, dbRow_c["BOM_Id"].ToString());
+                            childNode.ToolTipText = "Id";
+                            childNode.Image = m_imgFlag_blue;
+                            node.Nodes.Add(childNode);
+
+                            childNode = CreateNode(dbRow_c["BOM_Label"].ToString(), false, dbRow_c["BOM_Label"].ToString());
+                            childNode.ToolTipText = "Label";
+                            childNode.Image = m_imgKeyHS;
+                            node.Nodes.Add(childNode);
+
+                            childNode = CreateNode(dbRow_c["BOM_Quantity"].ToString(), false, dbRow_c["BOM_Quantity"].ToString());
+                            childNode.ToolTipText = "Quantity";
+                            childNode.Image = m_imgDocViewHS;
+                            node.Nodes.Add(childNode);
+                        }
+                    }
+                    break;
                 }
             }
 
@@ -1173,11 +1284,13 @@ namespace CatalogViewer
 
         private void RecursivelyPopulate(DataRow dbRow, RadTreeNode node)
         {
+
             //ImageTypes
             foreach (DataRow childRow in dbRow.GetChildRows("GlobalVar_IT"))
             {
                 RadTreeNode childNode = CreateNode(childRow["IT_Value"].ToString(), true, childRow["IT_id"].ToString());
                 childNode.ToolTipText = "Image Type";
+                childNode.Image = m_imgFlag_red;
                 node.Nodes.Add(childNode);
             }
 
@@ -1186,6 +1299,7 @@ namespace CatalogViewer
             {
                 RadTreeNode childNode = CreateNode(childRow["PU_Value"].ToString(), false, childRow["PU_id"].ToString());
                 childNode.ToolTipText = "Public URL";
+                childNode.Image = m_imgFlag_green;
                 node.Nodes.Add(childNode);
             }
 
@@ -1194,6 +1308,7 @@ namespace CatalogViewer
             {
                 RadTreeNode childNode = CreateNode(childRow["SAT_Value"].ToString(), false, childRow["SAT_id"].ToString());
                 childNode.ToolTipText = "Standardized Article Type";
+                childNode.Image = m_imgFlag_blue;
                 node.Nodes.Add(childNode);
             }
 
@@ -1215,10 +1330,6 @@ namespace CatalogViewer
             return node;
         }
 
-        private void btn_CallService_Click_1(object sender, EventArgs e)
-        {
-
-        }
     }
 }
     #endregion

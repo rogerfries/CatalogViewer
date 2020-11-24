@@ -127,14 +127,32 @@
   <data name="chloe.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\chloe.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="DocViewHS.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\images\DocViewHS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="dunhill.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\dunhill.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Flag_blueHS.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\images\Flag_blueHS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Flag_greenHS.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\images\Flag_greenHS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Flag_redHS.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\images\Flag_redHS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="FolderHS.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\images\FolderHS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="iwc_logo.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\iwc-logo.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="JLC_Logo_Black.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\JLC-Logo-Black.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="KeyHS.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\images\KeyHS.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="lange_and_sohne_logo.png" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\images\lange_and_sohne_logo.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

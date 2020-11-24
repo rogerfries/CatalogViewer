@@ -185,6 +185,7 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Logger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="Form1.resx">
@@ -235,25 +236,34 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
   <ItemGroup>
-    <EmbeddedResource Include="images\richemontlogo_aim.png" />
-    <EmbeddedResource Include="images\noimageavailable.png" />
-    <EmbeddedResource Include="images\noimageavailable_100.png" />
-    <None Include="images\B&amp;M.png" />
+    <Folder Include="logs\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="images\Computer.ico" />
+    <Content Include="images\FolderHS.png" />
+    <Content Include="images\Flag_blueHS.png" />
+    <Content Include="images\Flag_greenHS.png" />
+    <Content Include="images\Flag_redHS.png" />
+    <Content Include="images\DocViewHS.png" />
+    <Content Include="images\KeyHS.png" />
+    <Content Include="images\richemontlogo_aim.png" />
+    <Content Include="images\noimageavailable.png" />
+    <Content Include="images\noimageavailable_100.png" />
+    <Content Include="images\B&amp;M.png" />
     <Content Include="images\Cartier.png" />
     <None Include="Resources\Cartier.png.png" />
-    <None Include="images\chloe.png" />
-    <None Include="images\dunhill.png" />
-    <None Include="images\iwc-logo.png" />
-    <None Include="images\JLC-Logo-Black.png" />
-    <None Include="images\lange_and_sohne_logo.png" />
-    <None Include="images\Mont Blanc.png" />
-    <None Include="images\Piaget-Logo-Black.png" />
-    <None Include="images\Vacheron_Logo.png" />
-    <None Include="images\VCA Logo Black.png" />
-    <None Include="images\logo_RD.png" />
-    <None Include="images\Panerai_Logo.png" />
+    <Content Include="images\chloe.png" />
+    <Content Include="images\dunhill.png" />
+    <Content Include="images\iwc-logo.png" />
+    <Content Include="images\JLC-Logo-Black.png" />
+    <Content Include="images\lange_and_sohne_logo.png" />
+    <Content Include="images\Mont Blanc.png" />
+    <Content Include="images\Piaget-Logo-Black.png" />
+    <Content Include="images\Vacheron_Logo.png" />
+    <Content Include="images\VCA Logo Black.png" />
+    <Content Include="images\logo_RD.png" />
+    <Content Include="images\Panerai_Logo.png" />
     <Content Include="Resources\richemontlogo_aim.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

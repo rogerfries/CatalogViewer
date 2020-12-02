@@ -205,6 +205,7 @@
             this.cbx_BaseURL.Name = "cbx_BaseURL";
             this.cbx_BaseURL.Size = new System.Drawing.Size(282, 21);
             this.cbx_BaseURL.TabIndex = 20;
+            this.cbx_BaseURL.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbx_BaseURL_KeyDown);
             // 
             // label7
             // 
@@ -238,6 +239,7 @@
             this.cbx_Channel.Size = new System.Drawing.Size(107, 21);
             this.cbx_Channel.TabIndex = 17;
             this.cbx_Channel.Text = "IPADRETAIL";
+            this.cbx_Channel.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbx_Channel_KeyDown);
             // 
             // label6
             // 
@@ -361,6 +363,7 @@
             this.cbx_ArticleNum.Size = new System.Drawing.Size(107, 21);
             this.cbx_ArticleNum.TabIndex = 11;
             this.cbx_ArticleNum.Text = "CRWJTA0002";
+            this.cbx_ArticleNum.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbx_ArticleNum_KeyDown);
             // 
             // label5
             // 
@@ -438,7 +441,7 @@
             // 
             this.lbl_Timings.AutoSize = true;
             this.lbl_Timings.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_Timings.Location = new System.Drawing.Point(560, 14);
+            this.lbl_Timings.Location = new System.Drawing.Point(560, 12);
             this.lbl_Timings.Name = "lbl_Timings";
             this.lbl_Timings.Size = new System.Drawing.Size(0, 12);
             this.lbl_Timings.TabIndex = 4;

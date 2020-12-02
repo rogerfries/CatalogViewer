@@ -29,7 +29,8 @@ namespace CatalogViewer
         //public static string m_AppVersion_UI = "Version 1, Build 1, 11/20/2020"; //1. First release
         //public static string m_AppVersion_UI = "Version 1, Build 2, 11/23/2020"; //1. Deriving brand from Article Number. 2. Added user selectable Channel. 3. UI improvements.
         //public static string m_AppVersion_UI = "Version 1, Build 3, 11/24/2020"; //1. Added logging with some try/catches. 2. Added BOM data. 3. Added treeview node icons.
-        public static string m_AppVersion_UI = "Version 1, Build 4, 11/30/2020"; //1. Added error and no data hardening, 2. Handle NULL BOM, 3. Form activity indicators, 4) Added Environment selection, 5) UI Improvements
+        //public static string m_AppVersion_UI = "Version 1, Build 4, 11/30/2020"; //1. Added error and no data hardening, 2. Handle NULL BOM, 3. Form activity indicators, 4) Added Environment selection, 5) UI Improvements
+        public static string m_AppVersion_UI = "Version 1, Build 5, 12/02/2020"; //1. Corrected missing last image download, 2) Added Enter key detect to UI combobox controls, 3) Minor improvement to ProgressBar count display
 
 
         public static string m_CallMessage_Images = string.Empty;
@@ -159,7 +160,39 @@ namespace CatalogViewer
             radImageEditor1.ImageEditorElement.CommandsElement.Visibility = Telerik.WinControls.ElementVisibility.Hidden;
         }
 
+        private void cbx_ArticleNum_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                CallService_UIEvent();
+                e.Handled = true;
+            }
+        }
+
+        private void cbx_Channel_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                CallService_UIEvent();
+                e.Handled = true;
+            }
+        }
+
+        private void cbx_BaseURL_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                CallService_UIEvent();
+                e.Handled = true;
+            }
+        }
+
         private void btn_CallService_Click(object sender, EventArgs e)
+        {
+            CallService_UIEvent();
+        }
+
+        private void CallService_UIEvent()
         {
             //Check for Article Num entry
             string strArticleNum = string.Empty;
@@ -178,7 +211,6 @@ namespace CatalogViewer
                 return;
             }
         }
-
         private void btn_Abort_Click(object sender, EventArgs e)
         {
 
@@ -356,8 +388,6 @@ namespace CatalogViewer
                 cbx_BaseURL.Enabled = false;
                 btn_CallService.Enabled = false;
                 num_ImageFullSize.Enabled = false;
-                pb_Download.Visible = true;
-                lbl_ProgressBar.Visible = true;
                 UpdateDownloadProgressBarFromThread(true, 0, 0);
             }
             else
@@ -367,8 +397,6 @@ namespace CatalogViewer
                 cbx_BaseURL.Enabled = true;
                 btn_CallService.Enabled = true;
                 num_ImageFullSize.Enabled = true;
-                pb_Download.Visible = false;
-                lbl_ProgressBar.Visible = false;
                 UpdateDownloadProgressBarFromThread(true, 0, 0);
             }
 
@@ -624,8 +652,7 @@ namespace CatalogViewer
                     SetCallingIndicatorFromThread(false, false, true, false, true); //Turn on the calling indicator
 
                     //Update the progressbar
-                    pb_Download.Value = 0;
-                    pb_Download.Maximum = m_lstImageURLs.Count();
+                    UpdateDownloadProgressBarFromThread(false, 1, m_lstImageURLs.Count());
 
                     string strImageUrl = m_lstImageURLs[0]; //Note: Fetching image URL at index 0
 
@@ -683,7 +710,6 @@ namespace CatalogViewer
                         radListView1.SelectedIndex = 0;
 
                         m_dlCount = 1;
-                        pb_Download.Value = m_dlCount;
 
                     }
 
@@ -725,10 +751,11 @@ namespace CatalogViewer
             if (m_lstImageURLs != null & m_lstImageURLs.Count > 1)
             {
                 SetCallingIndicatorFromThread(false, false, false, true, true); //Turn on the calling indicator
-                for (int i = 1; i < m_lstImageURLs.Count - 1; i++) //Note: Starts FOR index at 1 to start after image URL 0
+                for (int i = 0; i < m_lstImageURLs.Count; i++) //Note: Starts FOR index at 1 to start after image URL 0
                 {
 
                     string strImageUrl = m_lstImageURLs[i];
+                    UpdateDownloadProgressBarFromThread(false, m_dlCount, m_lstImageURLs.Count);
 
                     using (WebClient client = new WebClient())
                     {
@@ -781,7 +808,6 @@ namespace CatalogViewer
                     }
 
                     m_dlCount += 1;
-                    UpdateDownloadProgressBarFromThread(false, m_dlCount+1, m_lstImageURLs.Count-1);
 
                 }
             }
@@ -794,6 +820,7 @@ namespace CatalogViewer
 
             SetCallServiceControlsFromThread(false, false); //Set the Call Service controls as Unlocked with Abort off
             SetCallingIndicatorFromThread(true, false, false, false, false); //Turn off the calling indicator
+
         }
         private string GetNoImageAvailableImageFilePathName(Boolean isThumb)
         {
@@ -824,8 +851,8 @@ namespace CatalogViewer
             string strCallMessage = string.Empty;
             if (m_dlCount > 0)
             {
-                int intCnt = m_dlCount;
-                int intCntTotal = m_lstImageURLs.Count() - 1; //-1 because the image count is zero based
+                int intCnt = m_dlCount; 
+                int intCntTotal = m_lstImageURLs.Count()+1; //+1 because m_lstImageURLs is zero based
                 strCallMessage = String.Concat("Returned ", intCnt.ToString(), " of ", intCntTotal.ToString(), " ", m_strBrandName, " catalog images for article '", strArticleNum, "' and Channel '", strChannel, "'.");
                 UpdateCallMessageFromThread(strCallMessage, false);
             }
@@ -983,15 +1010,34 @@ namespace CatalogViewer
             }
             else
             {
-                pb_Download.Value = valCount;
+                try
+                {
+                    if (bolClearLabel)
+                    {
+                        pb_Download.Maximum = 0;
+                        pb_Download.Value = 0;
+                        pb_Download.Visible = false;
 
-                if (bolClearLabel)
-                {
-                    lbl_ProgressBar.Text = String.Concat("Downloading Images.");
+                        lbl_ProgressBar.Text = String.Concat("Downloading Images.");
+                        lbl_ProgressBar.Visible = false;
+                    }
+                    else
+                    {
+                        pb_Download.Maximum = valMax;
+                        pb_Download.Value = valCount;
+                        pb_Download.Visible = true;
+
+                        valMax += 1; //+1 because the numeric value is zero-based
+                        valCount += 1; //+1 because the numeric value is zero-based
+                        lbl_ProgressBar.Text = String.Concat("Downloading ", valCount.ToString(), " of ", valMax.ToString(), " Images.");
+                        lbl_ProgressBar.Visible = true;
+                    }
                 }
-                else
+                catch
                 {
-                    lbl_ProgressBar.Text = String.Concat("Downloading ", valCount.ToString(), " of ", valMax.ToString(), " Images.");
+                    //Do not throw. This is not an error.
+                    //After the last image downloaded, the image download loop will call this sub with
+                    //a value that is over the max value, which throws an error, but is not an error.
                 }
             }
         }
@@ -1013,8 +1059,6 @@ namespace CatalogViewer
                     btn_CallService.Enabled = false;
                     btn_Abort.Visible = true;
                     num_ImageFullSize.Enabled = false;
-                    pb_Download.Visible = true;
-                    lbl_ProgressBar.Visible = true;
                     UpdateDownloadProgressBarFromThread(true, 0, 0);
                 }
                 else
@@ -1024,8 +1068,6 @@ namespace CatalogViewer
                     cbx_BaseURL.Enabled = true;
                     btn_CallService.Enabled = true;
                     num_ImageFullSize.Enabled = true;
-                    pb_Download.Visible = false;
-                    lbl_ProgressBar.Visible = false;
                     UpdateDownloadProgressBarFromThread(true, 0, 0);
                 }
 
@@ -1489,6 +1531,7 @@ namespace CatalogViewer
             RadTreeNode node = new RadTreeNode(text, expanded);
             return node;
         }
+
 
     }
 }

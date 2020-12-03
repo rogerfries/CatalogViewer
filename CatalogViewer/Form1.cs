@@ -30,7 +30,8 @@ namespace CatalogViewer
         //public static string m_AppVersion_UI = "Version 1, Build 2, 11/23/2020"; //1. Deriving brand from Article Number. 2. Added user selectable Channel. 3. UI improvements.
         //public static string m_AppVersion_UI = "Version 1, Build 3, 11/24/2020"; //1. Added logging with some try/catches. 2. Added BOM data. 3. Added treeview node icons.
         //public static string m_AppVersion_UI = "Version 1, Build 4, 11/30/2020"; //1. Added error and no data hardening, 2. Handle NULL BOM, 3. Form activity indicators, 4) Added Environment selection, 5) UI Improvements
-        public static string m_AppVersion_UI = "Version 1, Build 5, 12/02/2020"; //1. Corrected missing last image download, 2) Added Enter key detect to UI combobox controls, 3) Minor improvement to ProgressBar count display
+        //public static string m_AppVersion_UI = "Version 1, Build 5, 12/02/2020"; //1. Corrected missing last image download, 2) Added Enter key detect to UI combobox controls, 3) Minor improvement to ProgressBar count display
+        public static string m_AppVersion_UI = "Version 1, Build 6, 12/02/2020"; //1. Reduced to one service call, 2. Improved form processing indicatations, 2. Added timings, 3. Loggable timings
 
 
         public static string m_CallMessage_Images = string.Empty;
@@ -42,6 +43,9 @@ namespace CatalogViewer
         public static string m_UserBaseURL = string.Empty;
 
         public static TimeSpan m_tmeSpan_ServiceCall;
+        public static TimeSpan m_tmeSpan_ProcessingData;
+        public static TimeSpan m_tmeSpan_FirstThumbImage;
+        public static TimeSpan m_tmeSpan_FirstFullImage;
         public static TimeSpan m_tmeSpan_DLThread;
         public static TimeSpan m_tmeSpan_AppReady;
 
@@ -52,7 +56,7 @@ namespace CatalogViewer
         public static int m_dlCount = 0;
         public static string m_strBrandName = string.Empty;
 
-        public static List<string> m_lstImageURLs;
+        public static List<string> m_lstImageURLs = new List<string>();
 
         BindingList<ImageList> m_dsListView = new BindingList<ImageList>();
         BindingList<ImageData> m_dsImageData = new BindingList<ImageData>();
@@ -66,9 +70,10 @@ namespace CatalogViewer
         public delegate void UpdateCallMessageCallback(string strMessage, Boolean isError);
         public delegate void SetReadyIndicatorCallback(Boolean isVisible);
         public delegate void SetCallServiceControlsCallback(Boolean isCalling, Boolean bolAbortState);
-        public delegate void SetCallingIndicatorCallback(Boolean isCalling, Boolean isFetchingData, Boolean isDownloadingFirst, Boolean isThreadDownloading, Boolean isVisible);
+        public delegate void SetCallingIndicatorCallback(Boolean isCalling, Boolean isFetchingData, Boolean isDownloadingFirstThumb, Boolean isDownloadingFirstFull, Boolean isThreadDownloading, Boolean isVisible);
         public delegate void UpdateDownloadProgressBarCallback(Boolean bolClearLabel, int valCount, int valMax);
         public delegate void WriteLoggerCallback(string strLogEntry);
+        public delegate void UpdateTimersThreadedDoneCallback();
 
         DataSet ds_ImageDataDataset = new DataSet();
 
@@ -196,18 +201,27 @@ namespace CatalogViewer
         {
             //Check for Article Num entry
             string strArticleNum = string.Empty;
-            if (cbx_ArticleNum.Text != string.Empty & cbx_Channel.Text != string.Empty & cbx_BaseURL.Text != string.Empty)
+            if (cbx_ArticleNum.Text != string.Empty & cbx_Channel.Text != string.Empty)
             {
-                m_UserArticleNumber = cbx_ArticleNum.Text.Trim();
-                m_UserChannel = cbx_Channel.Text.Trim();
-                m_UserBaseURL = cbx_BaseURL.Text.Trim();
+                if (cbx_BaseURL.Text != string.Empty)
+                {
+                    m_UserArticleNumber = cbx_ArticleNum.Text.Trim();
+                    m_UserChannel = cbx_Channel.Text.Trim();
+                    m_UserBaseURL = cbx_BaseURL.Text.Trim();
 
-                CallService();
+                    CallService();
+                }
+                else
+                {
+                    cbx_BaseURL.Focus();
+                    MessageBox.Show("A valid Base URL is required.", "Entry Required", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    return;
+                }
             }
             else
             {
                 cbx_ArticleNum.Focus();
-                MessageBox.Show("A valid Article Number, Channel and Base URL are required.", "Entry Required", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                MessageBox.Show("A valid Article Number and Channel are required.", "Entry Required", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
         }
@@ -229,11 +243,11 @@ namespace CatalogViewer
             }
 
             SetReadyIndicator(true); //Turn on the ready indicator
-            SetCallingIndicatorFromThread(true, false, false, false, false); //Turn off the calling indicator
+            SetCallingIndicatorFromThread(true, false, false, false, false, false); //Turn o the "Calling" indicator
             SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
             UpdateCallMessage_ThreadedDone(m_UserArticleNumber, m_UserChannel);
             UpdateDownloadProgressBarFromThread(true, 0, 0);
-            UpdateTimers_ThreadedDone();
+            LoadPerformanceAnalysisDropdown();
         }
 
         private void CallService()
@@ -264,7 +278,6 @@ namespace CatalogViewer
             tbx_CallMessage.ForeColor = Color.Green;
             tbx_CallMessage.Visible = false;
 
-            lbl_Timings.Text = string.Empty;
             m_TimerIsSec = false;
 
             radTreeView1.Nodes.Clear();
@@ -333,23 +346,20 @@ namespace CatalogViewer
                 }
 
                 SetReadyIndicator(false); //Turn off the ready indicator
-                SetCallingIndicatorFromThread(true, false, false, false, false); //Turn off the calling indicator
                 SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
                 UpdateCallMessage_ThreadedDone(cbx_ArticleNum.Text, cbx_Channel.Text);
-                UpdateTimers_ThreadedDone();
             }
 
-            DateTime tmeEnd = DateTime.Now;
-            m_tmeSpan_AppReady = tmeEnd - tmeStart;
+            m_tmeSpan_AppReady = DateTime.Now - tmeStart; //End the time and calculate the timespan value
 
         }
 
-        private void SetCallingIndicatorFromThread(Boolean isCalling, Boolean isFetchingData, Boolean isDownloadingFirst, Boolean isThreadDownloading, Boolean isVisible)
+        private void SetCallingIndicatorFromThread(Boolean isCalling, Boolean isProcessingData, Boolean isDownloadingFirstThumb, Boolean isDownloadingFirstFull, Boolean isThreadDownloading, Boolean isVisible)
         {
             if (this.pnl_ActivityIndicator.InvokeRequired)
             {
                 SetCallingIndicatorCallback d = new SetCallingIndicatorCallback(SetCallingIndicatorFromThread);
-                this.Invoke(d, new object[] { isCalling, isFetchingData, isDownloadingFirst, isThreadDownloading, isVisible });
+                this.Invoke(d, new object[] { isCalling, isProcessingData, isDownloadingFirstThumb, isDownloadingFirstFull, isThreadDownloading, isVisible });
             }
             else
             {
@@ -358,20 +368,25 @@ namespace CatalogViewer
                     lbl_FormFlagTop.Text = "Calling the";
                     lbl_FormFlagBottom.Text = "Service";
                 }
-                else if (isFetchingData)
+                else if (isProcessingData)
                 {
-                    lbl_FormFlagTop.Text = "Fetching";
+                    lbl_FormFlagTop.Text = "Processing";
                     lbl_FormFlagBottom.Text = "the Data";
                 }
-                else if (isDownloadingFirst)
+                else if (isDownloadingFirstThumb)
                 {
                     lbl_FormFlagTop.Text = "Downloading";
-                    lbl_FormFlagBottom.Text = "1st Image";
+                    lbl_FormFlagBottom.Text = "1st Thumb Image";
+                }
+                else if (isDownloadingFirstFull)
+                {
+                    lbl_FormFlagTop.Text = "Downloading";
+                    lbl_FormFlagBottom.Text = "1st Full Image";
                 }
                 else if (isThreadDownloading)
                 {
                     lbl_FormFlagTop.Text = "Downloading";
-                    lbl_FormFlagBottom.Text = "Images";
+                    lbl_FormFlagBottom.Text = "Rest of Images";
                 }
 
                 pnl_ActivityIndicator.Visible = isVisible;
@@ -388,6 +403,8 @@ namespace CatalogViewer
                 cbx_BaseURL.Enabled = false;
                 btn_CallService.Enabled = false;
                 num_ImageFullSize.Enabled = false;
+                drp_Timings.Text = "";
+                drp_Timings.Visible = false;
                 UpdateDownloadProgressBarFromThread(true, 0, 0);
             }
             else
@@ -434,30 +451,6 @@ namespace CatalogViewer
                 }
             }
         }
-        private void lbl_Timings_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-            string strTimerMessage = string.Empty;
-
-            if (m_TimerIsSec)
-            {
-                //Note: Converting double to integer lops off the fractional value
-                int intServiceCall = Convert.ToInt32(m_tmeSpan_ServiceCall.TotalMilliseconds);
-                int intDLThread = Convert.ToInt32(m_tmeSpan_DLThread.TotalMilliseconds);
-                int intAppReady = Convert.ToInt32(m_tmeSpan_AppReady.TotalMilliseconds);
-                strTimerMessage = String.Concat("Service Call:", intServiceCall.ToString("#,##0"), " ms, DL Thread:", intDLThread.ToString("#,##0"), " ms, App Ready:", intAppReady.ToString("#,##0"), " ms");
-            }
-            else
-            {
-                double dblServiceCall = m_tmeSpan_ServiceCall.TotalMilliseconds / 1000;
-                double dblDLThread = m_tmeSpan_DLThread.TotalMilliseconds / 1000;
-                double dblAppReady = m_tmeSpan_AppReady.TotalMilliseconds / 1000;
-                strTimerMessage = String.Concat("Service Call:", dblServiceCall.ToString("#.#"), " sec, DL Thread:", dblDLThread.ToString("#.#"), " sec, App Ready:", dblAppReady.ToString("#.#"), " sec");
-            }
-
-            m_TimerIsSec = !m_TimerIsSec; //Toggle m_TimerIsSec
-
-            SetTimerLabelFromThread(strTimerMessage);
-        }
 
         private void btn_Exit_Click(object sender, EventArgs e)
         {
@@ -486,6 +479,85 @@ namespace CatalogViewer
             {
                 e.Cancel = true;
             }
+        }
+
+        private void LoadPerformanceAnalysisDropdown()
+        {
+
+            //Note: Converting double (TotalMilliseconds) to integer lops off the fractional value
+            int intServiceCall = Convert.ToInt32(m_tmeSpan_ServiceCall.TotalMilliseconds);
+            double dblProcessingDataMS = m_tmeSpan_ProcessingData.TotalMilliseconds;
+            int intFirstThumbImage = Convert.ToInt32(m_tmeSpan_FirstThumbImage.TotalMilliseconds);
+            int intFirstFullImage = Convert.ToInt32(m_tmeSpan_FirstFullImage.TotalMilliseconds);
+            int intDLThread = Convert.ToInt32(m_tmeSpan_DLThread.TotalMilliseconds);
+            int intAppReady = Convert.ToInt32(m_tmeSpan_AppReady.TotalMilliseconds);
+
+            double dblServiceCall = m_tmeSpan_ServiceCall.TotalSeconds;
+            double dblProcessingDataSec = m_tmeSpan_ProcessingData.TotalSeconds;
+            double dblFirstThumbImage = m_tmeSpan_FirstThumbImage.TotalSeconds;
+            double dblFirstFullImage = m_tmeSpan_FirstFullImage.TotalSeconds;
+            double dblDLThread = m_tmeSpan_DLThread.TotalSeconds;
+            double dblAppReady = m_tmeSpan_AppReady.TotalSeconds;
+
+            drp_Timings.Items.Clear();
+
+            if (m_UserAborted)
+            {
+                drp_Timings.Items.Add(String.Concat("Performance Analysis for ", m_UserArticleNumber, " / ", m_UserChannel, " (User Aborted)"));
+            }
+            else
+            {
+                drp_Timings.Items.Add(String.Concat("Performance Analysis for ", m_UserArticleNumber, " / ", m_UserChannel));
+            }
+            
+            string strLogEntry = String.Concat("PerfAnal:", m_UserArticleNumber, "/", m_UserChannel);
+
+            drp_Timings.Items.Add(String.Concat("Service Call: ", intServiceCall.ToString("#,##0"), " ms, ", dblServiceCall.ToString("#,##0.0"), " sec"));
+            strLogEntry = String.Concat(strLogEntry, ", SrvCall: ", intServiceCall.ToString("#,##0"), " ms, ", dblServiceCall.ToString("#,##0.0"), " sec");
+
+            drp_Timings.Items.Add(String.Concat("Processing Data: ", dblProcessingDataMS.ToString("#,##0.0"), " ms, ", dblProcessingDataSec.ToString("#,##0.00"), " sec"));
+            strLogEntry = string.Concat(strLogEntry, String.Concat(", PrcData: ", dblProcessingDataMS.ToString("#,##0.0"), " ms, ", dblProcessingDataSec.ToString("#,##0.00"), " sec"));
+
+            drp_Timings.Items.Add(String.Concat("First Thumb Image Download: ", intFirstThumbImage.ToString("#,##0"), " ms, ", dblFirstThumbImage.ToString("#,##0.0"), " sec"));
+            strLogEntry = string.Concat(strLogEntry, String.Concat(", 1stThumbDL: ", intFirstThumbImage.ToString("#,##0"), " ms, ", dblFirstThumbImage.ToString("#,##0.0"), " sec"));
+
+            if (num_ImageFullSize.Value == 0)
+            {
+                drp_Timings.Items.Add(String.Concat("First Image Download: ", intFirstFullImage.ToString("#,##0"), " ms, ", dblFirstFullImage.ToString("#,##0.0"), " sec"));
+                strLogEntry = string.Concat(strLogEntry, String.Concat(", 1stImageDL: ", intFirstFullImage.ToString("#,##0"), " ms, ", dblFirstFullImage.ToString("#,##0.0"), " sec"));
+
+                drp_Timings.Items.Add(String.Concat("Image and Thumb Downloads After First: ", intDLThread.ToString("#,##0"), " ms, ", dblDLThread.ToString("#,##0.0"), " sec"));
+                strLogEntry = string.Concat(strLogEntry, String.Concat(", Img/ThumbDL: ", intDLThread.ToString("#,##0"), " ms, ", dblDLThread.ToString("#,##0.0"), " sec"));
+            }
+            else
+            {
+                drp_Timings.Items.Add(String.Concat("First Image Download (User-Sized): ", intFirstFullImage.ToString("#,##0"), " ms, ", dblFirstFullImage.ToString("#,##0.0"), " sec"));
+                strLogEntry = string.Concat(strLogEntry, String.Concat(", 1stImgDL(US): ", intFirstFullImage.ToString("#,##0"), " ms, ", dblFirstFullImage.ToString("#,##0.0"), " sec"));
+
+                drp_Timings.Items.Add(String.Concat("Image and Thumb Downloads After First (User-Sized): ", intDLThread.ToString("#,##0"), " ms, ", dblDLThread.ToString("#,##0.0"), " sec"));
+                strLogEntry = string.Concat(strLogEntry, String.Concat(", Img/ThumbDL(US): ", intDLThread.ToString("#,##0"), " ms, ", dblDLThread.ToString("#,##0.0"), " sec"));
+            }
+
+            drp_Timings.Items.Add(String.Concat("Post Service Call Ready: ", intAppReady.ToString("#,##0"), " ms, ", dblAppReady.ToString("#,##0.0"), " sec"));
+            strLogEntry = string.Concat(strLogEntry, String.Concat(", PostSrvCallReady: ", intAppReady.ToString("#,##0"), " ms, ", dblAppReady.ToString("#,##0.0"), " sec"));
+
+            drp_Timings.SelectedIndex = 0;
+            drp_Timings.Visible = true;
+
+            if (cbx_LogTimings.Checked)
+            {
+                Logger _logger = new Logger();
+                _logger.Log(strLogEntry);
+            }
+
+            //Clear the TimeSpan vars for next use
+            m_tmeSpan_ServiceCall = System.TimeSpan.Zero;
+            m_tmeSpan_ProcessingData = System.TimeSpan.Zero;
+            m_tmeSpan_FirstThumbImage = System.TimeSpan.Zero;
+            m_tmeSpan_FirstFullImage = System.TimeSpan.Zero;
+            m_tmeSpan_DLThread = System.TimeSpan.Zero;
+            m_tmeSpan_AppReady = System.TimeSpan.Zero;
+
         }
 
         #endregion
@@ -629,33 +701,61 @@ namespace CatalogViewer
             string[] strImageFileNameSplit;
             string strImageDownloadURL = String.Empty;
 
-            //Fetch the image thumbnail width from app.config
-            string strThumbnailURLExtension = string.Concat("?impolicy=resize&width=", ConfigurationManager.AppSettings["MainProgramSettings.ImageThumbnailWidth"]);
-
-            //Fetch the Image List from the Service =======================================================================
-
+            //Fetch the Image List from the DataSet =======================================================================
             try
             {
-                DateTime tmeStart = DateTime.Now;
-                m_lstImageURLs = GetProductImages(strArticleNum, strBrand, strChannel, strBaseURL); //Call the function that calls service to get the image URL's
-                DateTime tmeEnd = DateTime.Now;
-                m_tmeSpan_ServiceCall = tmeEnd - tmeStart;
+                //For developer reference only --------------------------------
+                //PublicUrl
+                //DataRow dr_PU = ds_ImageDataDataset.Tables["dt_PU"].NewRow();
+                //dr_PU[0] = id; //To "id" datacolumn
+                //dr_PU[2] = imgItem.PublicUrl.Field;
+                //dr_PU[3] = imgItem.PublicUrl.Value;
+                //ds_ImageDataDataset.Tables["dt_PU"].Rows.Add(dr_PU);
+                //--------------------------------------------------------------
 
-                //Load the ListView with just the first image =======================================================================
+                try
+                {
+                    //Build the query
+                    DataTable tablePU = ds_ImageDataDataset.Tables["dt_PU"];
+                    var query = tablePU.AsEnumerable().
+                        Select(product => new
+                        {
+                            PublicUrl_id = product.Field<int>("PU_id"),
+                            PublicUrl_Code = product.Field<string>("PU_Code"),
+                            PublicUrl_Field = product.Field<string>("PU_Field"),
+                            PublicUrl_Value = product.Field<string>("PU_Value"),
+                        }); //Note: We don't need a WHERE clause because we want all of the Public URL values in the data result
 
-                //Fetch the image download folder path/name from app.config
-                string strImageDownloadFolder = ConfigurationManager.AppSettings["MainProgramSettings.ImageDownloadFolder"];
+                    //Clear the list collection (just to be safe)
+                    m_lstImageURLs.Clear();
 
-                if (m_lstImageURLs != null)
+                    foreach (var product in query)
+                    {
+                        m_lstImageURLs.Add(product.PublicUrl_Value);
+                    }
+
+                }
+                catch
+                {
+                    //string x = ex.Message.ToString();
+                    return false; //No images
+                }
+
+                if (m_lstImageURLs != null & m_lstImageURLs.Count() > 0) //If we have image URLs
                 {
 
-                    SetCallingIndicatorFromThread(false, false, true, false, true); //Turn on the calling indicator
+                    //Load the ListView with just the first image =======================================================================
+
+                    //Fetch the image download folder path/name from app.config
+                    string strImageDownloadFolder = ConfigurationManager.AppSettings["MainProgramSettings.ImageDownloadFolder"];
+
+                    //Fetch the image thumbnail width from app.config
+                    string strThumbnailURLExtension = string.Concat("?impolicy=resize&width=", ConfigurationManager.AppSettings["MainProgramSettings.ImageThumbnailWidth"]);
 
                     //Update the progressbar
                     UpdateDownloadProgressBarFromThread(false, 1, m_lstImageURLs.Count());
 
-                    string strImageUrl = m_lstImageURLs[0]; //Note: Fetching image URL at index 0
-
+                    string strImageUrl = m_lstImageURLs[0]; //Note: Fetch the FIRST image URL from m_lstImageURLs
                     using (WebClient client = new WebClient())
                     {
                         //Derive file names for the local copies
@@ -668,8 +768,13 @@ namespace CatalogViewer
                         //Thumbnail image download------------------------
                         try
                         {
+                            SetCallingIndicatorFromThread(false, false, true, false, false, true); //Turn on the "Downloading Thumb" indicator
+
+                            DateTime tmeStart = DateTime.Now;
                             //Derive a URL that includes the thumbnail resize command and download the resized image
                             client.DownloadFile(new Uri(string.Concat(strImageUrl, strThumbnailURLExtension)), strImageFilePathName_Thumb);
+                            m_tmeSpan_FirstThumbImage = DateTime.Now - tmeStart; //End the time and calculate the timespan value
+
                         }
                         catch //Note: Any exception will do
                         {
@@ -692,7 +797,11 @@ namespace CatalogViewer
                         //Download just the first full size image
                         try
                         {
+                            SetCallingIndicatorFromThread(false, false, false, true, false, true); //Turn on the "Downloading Full" indicator
+
+                            DateTime tmeStart = DateTime.Now;
                             client.DownloadFile(new Uri(strImageDownloadURL), strImageFilePathName_Full);
+                            m_tmeSpan_FirstFullImage = DateTime.Now - tmeStart; //End the time and calculate the timespan value
                         }
                         catch //Note: Any exception will do
                         {
@@ -750,7 +859,7 @@ namespace CatalogViewer
             //Fetch the Image List and Load the ListView =======================================================================
             if (m_lstImageURLs != null & m_lstImageURLs.Count > 1)
             {
-                SetCallingIndicatorFromThread(false, false, false, true, true); //Turn on the calling indicator
+                SetCallingIndicatorFromThread(false, false, false, false, true, true); //Turn on the "Thread Downloading Images" indicator
                 for (int i = 0; i < m_lstImageURLs.Count; i++) //Note: Starts FOR index at 1 to start after image URL 0
                 {
 
@@ -812,14 +921,12 @@ namespace CatalogViewer
                 }
             }
 
-            DateTime tmeEnd = DateTime.Now; //End the time
-            m_tmeSpan_DLThread = tmeEnd - tmeStart;
+            m_tmeSpan_DLThread = DateTime.Now - tmeStart; //End the time and calculate the timespan value
 
             UpdateCallMessage_ThreadedDone(strArticleNum, strChannel);
             UpdateTimers_ThreadedDone();
-
             SetCallServiceControlsFromThread(false, false); //Set the Call Service controls as Unlocked with Abort off
-            SetCallingIndicatorFromThread(true, false, false, false, false); //Turn off the calling indicator
+            SetCallingIndicatorFromThread(false, false, false, false, false, false); //Turn off the calling indicator
 
         }
         private string GetNoImageAvailableImageFilePathName(Boolean isThumb)
@@ -875,16 +982,15 @@ namespace CatalogViewer
 
         private void UpdateTimers_ThreadedDone()
         {
-            //Note: Converting double to integer lops off the fractional value
-            int intServiceCall = Convert.ToInt32(m_tmeSpan_ServiceCall.TotalMilliseconds);
-            int intDLThread = Convert.ToInt32(m_tmeSpan_DLThread.TotalMilliseconds);
-            int intAppReady = Convert.ToInt32(m_tmeSpan_AppReady.TotalMilliseconds);
-
-            string strTimerMessage = String.Concat("Service Call:", intServiceCall.ToString("#,##0"), " ms, DL Thread:", intDLThread.ToString("#,##0"), " ms, App Ready:", intAppReady.ToString("#,##0"), " ms");
-            SetTimerLabelFromThread(strTimerMessage);
-
-            string strLogEntry = String.Concat("Service Called (Aux Data Thread Completed): ", "AN:", m_UserArticleNumber, ", CH:", m_UserChannel, ", BaseURL:", m_UserBaseURL, ", ImageCount:", m_dlCount.ToString(), ", User Aborted:", m_UserAborted.ToString());
-            WriteLoggerFromThread(strLogEntry);
+            if (this.drp_Timings.InvokeRequired)
+            {
+                UpdateTimersThreadedDoneCallback d = new UpdateTimersThreadedDoneCallback(UpdateTimers_ThreadedDone);
+                this.Invoke(d, new object[] { });
+            }
+            else
+            {
+                LoadPerformanceAnalysisDropdown();
+            }
         }
 
         private void ListViewBeginUpdateFromThread()
@@ -892,6 +998,7 @@ namespace CatalogViewer
             if (this.radListView1.InvokeRequired)
             {
                 ListViewBeginUpdateCallback d = new ListViewBeginUpdateCallback(ListViewBeginUpdateFromThread);
+                this.Invoke(d, new object[] { });
             }
             else
             {
@@ -919,6 +1026,7 @@ namespace CatalogViewer
             if (this.radListView1.InvokeRequired)
             {
                 ListViewEndUpdateCallback d = new ListViewEndUpdateCallback(ListViewEndUpdateFromThread);
+                this.Invoke(d, new object[] { });
             }
             else
             {
@@ -972,19 +1080,6 @@ namespace CatalogViewer
             {
                 Logger _logger = new Logger();
                 _logger.Log(strLogEntry);
-            }
-        }
-
-        private void SetTimerLabelFromThread(string strTimerMessage)
-        {
-            if (this.lbl_Timings.InvokeRequired)
-            {
-                SetTimerLabelCallback d = new SetTimerLabelCallback(SetTimerLabelFromThread);
-                this.Invoke(d, new object[] { strTimerMessage });
-            }
-            else
-            {
-                lbl_Timings.Text = strTimerMessage;
             }
         }
 
@@ -1059,6 +1154,8 @@ namespace CatalogViewer
                     btn_CallService.Enabled = false;
                     btn_Abort.Visible = true;
                     num_ImageFullSize.Enabled = false;
+                    drp_Timings.Text = "";
+                    drp_Timings.Visible = false;
                     UpdateDownloadProgressBarFromThread(true, 0, 0);
                 }
                 else
@@ -1072,33 +1169,6 @@ namespace CatalogViewer
                 }
 
                 btn_Abort.Visible = bolAbortState;
-            }
-        }
-
-        private List<string> GetProductImages(string strArticleNum, string strBrand, string strChannel, string strBaseURL)
-        {
-            try
-            {
-                var apiService = new RichemontApiLibrary.ProductCatalogApi();
-                var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
-                {
-                    Article = strArticleNum,
-                    Brand = strBrand,
-                    Channel = strChannel,
-                    Language = "en",
-                    FromResult = 0,
-                    PageSize = 10
-                };
-
-                //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> TO DO - add m_UserBaseURL to service parameters
-
-                var images = apiService.GetStandardizedProductImages(request);
-                return images;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error occurred: " + ex.Message);
-                return null;
             }
         }
 
@@ -1266,7 +1336,7 @@ namespace CatalogViewer
         {
             Logger _logger = new Logger();
 
-            SetCallingIndicatorFromThread(true, false, false, false, true); //Turn on the calling indicator
+            SetCallingIndicatorFromThread(true, false, false, false, false, true); //Turn on the "Calling Service" indicator
 
             var apiService = new RichemontApiLibrary.ProductCatalogApi();
             var result = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Response();
@@ -1278,12 +1348,14 @@ namespace CatalogViewer
                 Language = "en",
                 FromResult = 0,
                 PageSize = 10
-            };
-            //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> TO DO - add m_UserBaseURL to service parameters
+            }; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> TO DO - add m_UserBaseURL to service parameters
 
             try
             {
+                DateTime tmeStart = DateTime.Now;
                 result = apiService.GetStandardizedProduct(request);
+                m_tmeSpan_ServiceCall = DateTime.Now - tmeStart; //End the time and calculate the timespan value
+
                 if (result == null)
                 {
                     //If we get no data back bail out now - calling sub handles UI message
@@ -1303,8 +1375,9 @@ namespace CatalogViewer
 
             try
             {
-                SetCallingIndicatorFromThread(false, true, false, false, true); //Turn on the calling indicator
+                SetCallingIndicatorFromThread(false, true, false, false, false, true); //Turn on the "Processing Data" indicator
 
+                DateTime tmeStart = DateTime.Now;
                 foreach (var HitItem in result.Hits.Hits)
                 {
                     var ImageItem = HitItem.Source.Images;
@@ -1402,6 +1475,9 @@ namespace CatalogViewer
                         _logger.Log(String.Concat("NOTICE - Image Data Was NULL, AN:", m_UserArticleNumber, ", CN:", m_UserChannel, ", BaseURL:", m_UserBaseURL));
                     } //if (ImageItem != null)
                 } //foreach (var HitItem in result.Hits.Hits)
+
+                m_tmeSpan_ProcessingData = DateTime.Now - tmeStart; //End the time and calculate the timespan value
+
             }
             catch (Exception ex)
             {

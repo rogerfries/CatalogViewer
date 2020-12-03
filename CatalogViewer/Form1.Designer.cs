@@ -55,8 +55,9 @@
             this.num_ImageFullSize = new System.Windows.Forms.NumericUpDown();
             this.label3 = new System.Windows.Forms.Label();
             this.pnl_Footer = new System.Windows.Forms.Panel();
+            this.cbx_LogTimings = new System.Windows.Forms.CheckBox();
+            this.drp_Timings = new System.Windows.Forms.ComboBox();
             this.lbl_AppVersion = new System.Windows.Forms.Label();
-            this.lbl_Timings = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.btn_Exit = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
@@ -176,9 +177,9 @@
             // 
             this.lbl_FormFlagBottom.BackColor = System.Drawing.Color.Green;
             this.lbl_FormFlagBottom.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.lbl_FormFlagBottom.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_FormFlagBottom.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_FormFlagBottom.ForeColor = System.Drawing.Color.Yellow;
-            this.lbl_FormFlagBottom.Location = new System.Drawing.Point(3, 28);
+            this.lbl_FormFlagBottom.Location = new System.Drawing.Point(3, 27);
             this.lbl_FormFlagBottom.Name = "lbl_FormFlagBottom";
             this.lbl_FormFlagBottom.Size = new System.Drawing.Size(144, 24);
             this.lbl_FormFlagBottom.TabIndex = 7;
@@ -189,9 +190,9 @@
             // 
             this.lbl_FormFlagTop.BackColor = System.Drawing.Color.Green;
             this.lbl_FormFlagTop.FlatStyle = System.Windows.Forms.FlatStyle.System;
-            this.lbl_FormFlagTop.Font = new System.Drawing.Font("Microsoft Sans Serif", 14F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_FormFlagTop.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbl_FormFlagTop.ForeColor = System.Drawing.Color.Yellow;
-            this.lbl_FormFlagTop.Location = new System.Drawing.Point(3, 2);
+            this.lbl_FormFlagTop.Location = new System.Drawing.Point(3, 5);
             this.lbl_FormFlagTop.Name = "lbl_FormFlagTop";
             this.lbl_FormFlagTop.Size = new System.Drawing.Size(144, 24);
             this.lbl_FormFlagTop.TabIndex = 6;
@@ -415,8 +416,9 @@
             // 
             // pnl_Footer
             // 
+            this.pnl_Footer.Controls.Add(this.cbx_LogTimings);
+            this.pnl_Footer.Controls.Add(this.drp_Timings);
             this.pnl_Footer.Controls.Add(this.lbl_AppVersion);
-            this.pnl_Footer.Controls.Add(this.lbl_Timings);
             this.pnl_Footer.Controls.Add(this.checkBox1);
             this.pnl_Footer.Controls.Add(this.btn_Exit);
             this.pnl_Footer.Controls.Add(this.label2);
@@ -427,34 +429,48 @@
             this.pnl_Footer.Size = new System.Drawing.Size(949, 35);
             this.pnl_Footer.TabIndex = 15;
             // 
+            // cbx_LogTimings
+            // 
+            this.cbx_LogTimings.AutoSize = true;
+            this.cbx_LogTimings.Checked = true;
+            this.cbx_LogTimings.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.cbx_LogTimings.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbx_LogTimings.Location = new System.Drawing.Point(446, 17);
+            this.cbx_LogTimings.Name = "cbx_LogTimings";
+            this.cbx_LogTimings.Size = new System.Drawing.Size(64, 16);
+            this.cbx_LogTimings.TabIndex = 7;
+            this.cbx_LogTimings.Text = "Log Tmgs";
+            this.cbx_LogTimings.UseVisualStyleBackColor = true;
+            // 
+            // drp_Timings
+            // 
+            this.drp_Timings.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.drp_Timings.FormattingEnabled = true;
+            this.drp_Timings.Location = new System.Drawing.Point(512, 7);
+            this.drp_Timings.Name = "drp_Timings";
+            this.drp_Timings.Size = new System.Drawing.Size(355, 21);
+            this.drp_Timings.TabIndex = 6;
+            this.drp_Timings.Visible = false;
+            // 
             // lbl_AppVersion
             // 
             this.lbl_AppVersion.AutoSize = true;
             this.lbl_AppVersion.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_AppVersion.Location = new System.Drawing.Point(318, 18);
+            this.lbl_AppVersion.Location = new System.Drawing.Point(312, 18);
             this.lbl_AppVersion.Name = "lbl_AppVersion";
             this.lbl_AppVersion.Size = new System.Drawing.Size(56, 12);
             this.lbl_AppVersion.TabIndex = 5;
             this.lbl_AppVersion.Text = "App Version";
             // 
-            // lbl_Timings
-            // 
-            this.lbl_Timings.AutoSize = true;
-            this.lbl_Timings.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_Timings.Location = new System.Drawing.Point(560, 12);
-            this.lbl_Timings.Name = "lbl_Timings";
-            this.lbl_Timings.Size = new System.Drawing.Size(0, 12);
-            this.lbl_Timings.TabIndex = 4;
-            this.lbl_Timings.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lbl_Timings_MouseDoubleClick);
-            // 
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(469, 10);
+            this.checkBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.checkBox1.Location = new System.Drawing.Point(446, 3);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(83, 17);
+            this.checkBox1.Size = new System.Drawing.Size(48, 16);
             this.checkBox1.TabIndex = 3;
-            this.checkBox1.Text = "Show Menu";
+            this.checkBox1.Text = "Menu";
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
@@ -473,7 +489,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 6.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(318, 3);
+            this.label2.Location = new System.Drawing.Point(313, 3);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(123, 12);
             this.label2.TabIndex = 1;
@@ -485,7 +501,7 @@
             this.pictureBox1.Image = global::CatalogViewer.Properties.Resources.richemontlogo_aim;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(318, 35);
+            this.pictureBox1.Size = new System.Drawing.Size(312, 35);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
@@ -541,7 +557,6 @@
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.NumericUpDown num_ImageFullSize;
-        private System.Windows.Forms.Label lbl_Timings;
         private System.Windows.Forms.ComboBox cbx_ArticleNum;
         private System.Windows.Forms.Label lbl_ReadyIndicator;
         private System.Windows.Forms.Button btn_Abort;
@@ -558,6 +573,8 @@
         private System.Windows.Forms.Panel pnl_ActivityIndicator;
         private System.Windows.Forms.Label lbl_FormFlagBottom;
         private System.Windows.Forms.Label lbl_ProgressBar;
+        private System.Windows.Forms.ComboBox drp_Timings;
+        private System.Windows.Forms.CheckBox cbx_LogTimings;
     }
 }
 

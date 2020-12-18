@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -31,8 +32,8 @@ namespace CatalogViewer
         //public static string m_AppVersion_UI = "Version 1, Build 3, 11/24/2020"; //1. Added logging with some try/catches. 2. Added BOM data. 3. Added treeview node icons.
         //public static string m_AppVersion_UI = "Version 1, Build 4, 11/30/2020"; //1. Added error and no data hardening, 2. Handle NULL BOM, 3. Form activity indicators, 4) Added Environment selection, 5) UI Improvements
         //public static string m_AppVersion_UI = "Version 1, Build 5, 12/02/2020"; //1. Corrected missing last image download, 2) Added Enter key detect to UI combobox controls, 3) Minor improvement to ProgressBar count display
-        public static string m_AppVersion_UI = "Version 1, Build 6, 12/02/2020"; //1. Reduced to one service call, 2. Improved form processing indicatations, 2. Added timings, 3. Loggable timings
-
+        //public static string m_AppVersion_UI = "Version 1, Build 6, 12/02/2020"; //1. Reduced to one service call, 2. Improved form processing indicatations, 2. Added timings, 3. Loggable timings
+        public static string m_AppVersion_UI = "Version 1, Build 7, 12/18/2020"; //1. Revised to use the dynamic API service result, 2. Added BOM treeview, 3. Added Image Data search for testing/review
 
         public static string m_CallMessage_Images = string.Empty;
         public static Boolean m_CallIsError_Images = false;
@@ -61,6 +62,8 @@ namespace CatalogViewer
         BindingList<ImageList> m_dsListView = new BindingList<ImageList>();
         BindingList<ImageData> m_dsImageData = new BindingList<ImageData>();
 
+        public static dynamic dynAPIFullDataResult = null;
+
         //These delegates enable asynchronous calls
         public delegate void SetTimerLabelCallback(string strTimerMessage);
         public delegate void AppendListViewDatasetCallback(int idx, string strImageFilePathName_Thumb, string strImageFilePathName_Full, string strImageDownloadURL);
@@ -87,6 +90,9 @@ namespace CatalogViewer
         public static Bitmap m_imgKeyHS;
         public static Bitmap m_imgDocViewHS;
 
+        public static Dictionary<string, string> dictFields = new Dictionary<string, string>();
+        public const string cnstAllFieldsDropdownText = "--All Fields--";
+
         public Form1()
         {
             InitializeComponent();
@@ -105,6 +111,24 @@ namespace CatalogViewer
             m_imgFlag_blue = (Bitmap)rm.GetObject("Flag_blueHS.png");
             m_imgKeyHS = (Bitmap)rm.GetObject("KeyHS.png");
             m_imgDocViewHS = (Bitmap)rm.GetObject("DocViewHS.png");
+
+            cbx_DataSearchTokens.Text = cnstAllFieldsDropdownText;
+
+            //Populate the Fields dictionary
+            dictFields.Add("_image", "Image");
+            dictFields.Add("ASSET_ORDER", "Asset Order");
+            dictFields.Add("_imagetypes", "Image Types");
+            dictFields.Add("IMAGE_TYPE", "Image Type");
+            dictFields.Add("IMAGE_TYPE/code", "Image Type/Code");
+            dictFields.Add("IMAGE_TYPE/field", "Image Type/Field");
+            dictFields.Add("IMAGE_TYPE/value", "Image Type/value");
+            dictFields.Add("akamai:default", "Public URL");
+            dictFields.Add("NAME", "Name");
+            dictFields.Add("_imagebackgrounds", "Image Backgrounds");
+            dictFields.Add("IMAGE_BACKGROUND", "Image Background");
+            dictFields.Add("_productviews", "Product Views");
+            dictFields.Add("PRODUCT_VIEW", "Product View");
+            dictFields.Add("CREDIT", "Credit");
         }
 
         static void MyHandler(object sender, UnhandledExceptionEventArgs args)
@@ -274,13 +298,16 @@ namespace CatalogViewer
             m_dlCount = 0;
             m_UserAborted = false;
 
+            cbx_DataSearchTokens.SelectedItem = null;
+            tbx_LocateValue.Text = string.Empty;
+
             tbx_CallMessage.Text = string.Empty;
             tbx_CallMessage.ForeColor = Color.Green;
             tbx_CallMessage.Visible = false;
 
             m_TimerIsSec = false;
 
-            radTreeView1.Nodes.Clear();
+            treeviewData.Nodes.Clear();
             radImageEditor1.CurrentBitmap = null;
             radImageEditor1.Refresh();
 
@@ -304,7 +331,7 @@ namespace CatalogViewer
 
             SetReadyIndicator(false); //Turn off the ready indicator
             pb_BrandLogo.Image = null; //Clear the brand picturebox
-           
+
             //Derive the brand data
             Tuple<string, string, string> strBrandData = GetBrandByArticlePrefix(m_UserArticleNumber);
             if (strBrandData.Item3 != string.Empty)
@@ -320,12 +347,14 @@ namespace CatalogViewer
 
             m_strBrandName = strBrandData.Item2;
 
-            if (CallService_AuxillaryData(m_UserArticleNumber, strBrandData.Item1, m_UserChannel, m_UserBaseURL))
+
+
+            if (CallService_AsDynamic(m_UserArticleNumber, strBrandData.Item1, m_UserChannel, m_UserBaseURL))
             {
-                if (CallServiceImages(m_UserArticleNumber, strBrandData.Item1, m_UserChannel, m_UserBaseURL))
+                if (CallServiceImages_AsDynamic(m_UserArticleNumber, strBrandData.Item1, m_UserChannel, m_UserBaseURL))
                 {
                     _thread = new Thread(() => CallServiceImages_Threaded(m_UserArticleNumber, m_UserChannel)) { IsBackground = false };
-                    BindTreeview(0); //Before we start the thread, bind the Aux data treeview to the first image data which was loaded in CallService_Images sub
+                    //xxxxxxxxxxxxxBindTreeview(0); //Before we start the thread, bind the Aux data treeview to the first image data which was loaded in CallService_Images sub
                     _thread.Start();
                 }
             }
@@ -349,6 +378,36 @@ namespace CatalogViewer
                 SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
                 UpdateCallMessage_ThreadedDone(cbx_ArticleNum.Text, cbx_Channel.Text);
             }
+
+            //if (CallService_AuxillaryData(m_UserArticleNumber, strBrandData.Item1, m_UserChannel, m_UserBaseURL))
+            //{
+            //    if (CallServiceImages(m_UserArticleNumber, strBrandData.Item1, m_UserChannel, m_UserBaseURL))
+            //    {
+            //        _thread = new Thread(() => CallServiceImages_Threaded(m_UserArticleNumber, m_UserChannel)) { IsBackground = false };
+            //        BindTreeview(0); //Before we start the thread, bind the Aux data treeview to the first image data which was loaded in CallService_Images sub
+            //        _thread.Start();
+            //    }
+            //}
+            //else
+            //{
+            //    //No Aux data returned, so reset the UI
+            //    //Kill a previous thumb thread if still running
+            //    try
+            //    {
+            //        if (_thread != null & _thread.ThreadState.Equals(ThreadState.Running))
+            //        {
+            //            _thread.Abort();
+            //        }
+            //    }
+            //    catch
+            //    {
+            //        //Do not throw - the thread doesn't exist
+            //    }
+
+            //    SetReadyIndicator(false); //Turn off the ready indicator
+            //    SetCallServiceControls(false, false); //Set the Call Service controls as Unlocked with Abort off
+            //    UpdateCallMessage_ThreadedDone(cbx_ArticleNum.Text, cbx_Channel.Text);
+            //}
 
             m_tmeSpan_AppReady = DateTime.Now - tmeStart; //End the time and calculate the timespan value
 
@@ -406,6 +465,12 @@ namespace CatalogViewer
                 drp_Timings.Text = "";
                 drp_Timings.Visible = false;
                 UpdateDownloadProgressBarFromThread(true, 0, 0);
+
+                cbx_DataSearchTokens.Enabled = false;
+                tbx_LocateValue.Enabled = false;
+                btn_TreeLocateReset.Enabled = false;
+                btn_LocateValue.Enabled = false;
+                
             }
             else
             {
@@ -415,6 +480,12 @@ namespace CatalogViewer
                 btn_CallService.Enabled = true;
                 num_ImageFullSize.Enabled = true;
                 UpdateDownloadProgressBarFromThread(true, 0, 0);
+
+                cbx_DataSearchTokens.Enabled = true;
+                tbx_LocateValue.Enabled = true;
+                btn_TreeLocateReset.Enabled = true;
+                btn_LocateValue.Enabled = true;
+
             }
 
             btn_Abort.Visible = bolAbortState;
@@ -440,14 +511,14 @@ namespace CatalogViewer
 
         private void Form1_SizeChanged(object sender, EventArgs e)
         {
-            if (radListView1.SelectedItems.Count >= 1)
+            if (rlv_Images.SelectedItems.Count >= 1)
             {
-                string ImageFileNamePath = radListView1.Items[radListView1.SelectedIndex].Value.ToString();
+                string ImageFileNamePath = rlv_Images.Items[rlv_Images.SelectedIndex].Value.ToString();
 
                 if (ImageFileNamePath != string.Empty)
                 {
                     radImageEditor1.OpenImage(ImageFileNamePath);
-                    BindTreeview(radListView1.SelectedIndex); //Filter to the selected image PID
+                    //xxxxBindTreeview(rlv_Images.SelectedIndex); //Filter to the selected image PID
                 }
             }
         }
@@ -509,7 +580,7 @@ namespace CatalogViewer
             {
                 drp_Timings.Items.Add(String.Concat("Performance Analysis for ", m_UserArticleNumber, " / ", m_UserChannel));
             }
-            
+
             string strLogEntry = String.Concat("PerfAnal:", m_UserArticleNumber, "/", m_UserChannel);
 
             drp_Timings.Items.Add(String.Concat("Service Call: ", intServiceCall.ToString("#,##0"), " ms, ", dblServiceCall.ToString("#,##0.0"), " sec"));
@@ -690,11 +761,12 @@ namespace CatalogViewer
 
         #region "Images ===================================================================================================================="
 
-        private Boolean CallServiceImages(string strArticleNum, string strBrand, string strChannel, string strBaseURL)
+        private Boolean CallServiceImages_AsDynamic(string strArticleNum, string strBrand, string strChannel, string strBaseURL)
         {
 
             // Set local variables =======================================================================
             Logger _logger = new Logger();
+
             string strImageFileNameOnly = String.Empty;
             string strImageFilePathName_Full = String.Empty;
             string strImageFilePathName_Thumb = String.Empty;
@@ -715,29 +787,38 @@ namespace CatalogViewer
 
                 try
                 {
-                    //Build the query
-                    DataTable tablePU = ds_ImageDataDataset.Tables["dt_PU"];
-                    var query = tablePU.AsEnumerable().
-                        Select(product => new
-                        {
-                            PublicUrl_id = product.Field<int>("PU_id"),
-                            PublicUrl_Code = product.Field<string>("PU_Code"),
-                            PublicUrl_Field = product.Field<string>("PU_Field"),
-                            PublicUrl_Value = product.Field<string>("PU_Value"),
-                        }); //Note: We don't need a WHERE clause because we want all of the Public URL values in the data result
 
                     //Clear the list collection (just to be safe)
                     m_lstImageURLs.Clear();
 
-                    foreach (var product in query)
+                    //Get the iamge URLs into a list for further processing
+                    dynamic dynImageData = (IEnumerable<dynamic>)dynAPIFullDataResult.hits.hits[0]._source.images;
+                    foreach (var imageItem in dynImageData)
                     {
-                        m_lstImageURLs.Add(product.PublicUrl_Value);
+                        m_lstImageURLs.Add(imageItem.publicUrl.value.ToString());
                     }
 
+                    //DataTable tablePU = ds_ImageDataDataset.Tables["dt_PU"];
+                    //var query = tablePU.AsEnumerable().
+                    //    Select(product => new
+                    //    {
+                    //        PublicUrl_id = product.Field<int>("PU_id"),
+                    //        PublicUrl_Code = product.Field<string>("PU_Code"),
+                    //        PublicUrl_Field = product.Field<string>("PU_Field"),
+                    //        PublicUrl_Value = product.Field<string>("PU_Value"),
+                    //    }); //Note: We don't need a WHERE clause because we want all of the Public URL values in the data result
+
+                    ////Clear the list collection (just to be safe)
+                    //m_lstImageURLs.Clear();
+
+                    //foreach (var product in query)
+                    //{
+                    //    m_lstImageURLs.Add(product.PublicUrl_Value);
+                    //}
+
                 }
-                catch
+                catch (Exception ex)
                 {
-                    //string x = ex.Message.ToString();
                     return false; //No images
                 }
 
@@ -809,14 +890,14 @@ namespace CatalogViewer
                         }
 
                         //We'll wait for the full size download to finish before updating the UI with the newly downloaded thumb
-                        this.radListView1.BeginUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the full size image downloads
+                        this.rlv_Images.BeginUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the full size image downloads
                         m_dsListView.Add(new ImageList(0, strImageFilePathName_Thumb, strImageFilePathName_Full, strImageDownloadURL));
-                        this.radListView1.EndUpdate();
+                        this.rlv_Images.EndUpdate();
 
                         //Load the image Editor now to give the user something to look at
                         radImageEditor1.OpenImage(strImageFilePathName_Full);
-                        radListView1.Refresh(); //Refresh the ListView after the full size image has completed download
-                        radListView1.SelectedIndex = 0;
+                        rlv_Images.Refresh(); //Refresh the ListView after the full size image has completed download
+                        rlv_Images.SelectedIndex = 0;
 
                         m_dlCount = 1;
 
@@ -860,7 +941,7 @@ namespace CatalogViewer
             if (m_lstImageURLs != null & m_lstImageURLs.Count > 1)
             {
                 SetCallingIndicatorFromThread(false, false, false, false, true, true); //Turn on the "Thread Downloading Images" indicator
-                for (int i = 0; i < m_lstImageURLs.Count; i++) //Note: Starts FOR index at 1 to start after image URL 0
+                for (int i = 1; i < m_lstImageURLs.Count; i++) //Note: Starts FOR index at 1 to start after image URL 0 of first downloaded image
                 {
 
                     string strImageUrl = m_lstImageURLs[i];
@@ -958,8 +1039,8 @@ namespace CatalogViewer
             string strCallMessage = string.Empty;
             if (m_dlCount > 0)
             {
-                int intCnt = m_dlCount; 
-                int intCntTotal = m_lstImageURLs.Count()+1; //+1 because m_lstImageURLs is zero based
+                int intCnt = m_dlCount;
+                int intCntTotal = m_lstImageURLs.Count() + 1; //+1 because m_lstImageURLs is zero based
                 strCallMessage = String.Concat("Returned ", intCnt.ToString(), " of ", intCntTotal.ToString(), " ", m_strBrandName, " catalog images for article '", strArticleNum, "' and Channel '", strChannel, "'.");
                 UpdateCallMessageFromThread(strCallMessage, false);
             }
@@ -995,55 +1076,55 @@ namespace CatalogViewer
 
         private void ListViewBeginUpdateFromThread()
         {
-            if (this.radListView1.InvokeRequired)
+            if (this.rlv_Images.InvokeRequired)
             {
                 ListViewBeginUpdateCallback d = new ListViewBeginUpdateCallback(ListViewBeginUpdateFromThread);
                 this.Invoke(d, new object[] { });
             }
             else
             {
-                this.radListView1.BeginUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the image list builds
+                this.rlv_Images.BeginUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the image list builds
             }
         }
 
         private void AppendListViewDatasetFromThread(int idx, string strImageFilePathName_Thumb, string strImageFilePathName_Full, string strImageDownloadURL)
         {
-            if (this.radListView1.InvokeRequired)
+            if (this.rlv_Images.InvokeRequired)
             {
                 AppendListViewDatasetCallback d = new AppendListViewDatasetCallback(AppendListViewDatasetFromThread);
                 this.Invoke(d, new object[] { idx, strImageFilePathName_Thumb, strImageFilePathName_Full, strImageDownloadURL });
             }
             else
             {
-                this.radListView1.BeginUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the image list builds
+                this.rlv_Images.BeginUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the image list builds
                 m_dsListView.Add(new ImageList(idx, strImageFilePathName_Thumb, strImageFilePathName_Full, strImageDownloadURL));
-                this.radListView1.EndUpdate();
+                this.rlv_Images.EndUpdate();
             }
         }
 
         private void ListViewEndUpdateFromThread()
         {
-            if (this.radListView1.InvokeRequired)
+            if (this.rlv_Images.InvokeRequired)
             {
                 ListViewEndUpdateCallback d = new ListViewEndUpdateCallback(ListViewEndUpdateFromThread);
                 this.Invoke(d, new object[] { });
             }
             else
             {
-                this.radListView1.EndUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the image list builds
+                this.rlv_Images.EndUpdate(); //Note: BeginUpdate and EndUpdate prevent auto scrolling as the image list builds
             }
         }
 
         private void RefreshListViewFromThread()
         {
-            if (this.radListView1.InvokeRequired)
+            if (this.rlv_Images.InvokeRequired)
             {
                 RefreshListViewCallback d = new RefreshListViewCallback(RefreshListViewFromThread);
                 this.Invoke(d, new object[] { });
             }
             else
             {
-                radListView1.Refresh();
+                rlv_Images.Refresh();
             }
         }
 
@@ -1212,14 +1293,16 @@ namespace CatalogViewer
 
         private void radListView1_SelectedItemChanged(object sender, EventArgs e)
         {
-            if (radListView1.SelectedItems.Count >= 1)
+            if (rlv_Images.SelectedItems.Count >= 1)
             {
                 try
                 {
-                    string ImageFileNamePath = radListView1.Items[radListView1.SelectedIndex].Value.ToString();
+                    string ImageFileNamePath = rlv_Images.Items[rlv_Images.SelectedIndex].Value.ToString();
                     radImageEditor1.OpenImage(ImageFileNamePath);
 
-                    BindTreeview(radListView1.SelectedIndex); //Filter to the selected image PID
+                    LoadDataTreeview(rlv_Images.SelectedIndex);
+
+                    //xxxxxxxxxxxxxxBindTreeview(rlv_Images.SelectedIndex); //Filter to the selected image PID
                 }
                 catch
                 {
@@ -1243,27 +1326,25 @@ namespace CatalogViewer
 
         private void LoadListView()
         {
-            radListView1.ItemDataBound += new Telerik.WinControls.UI.ListViewItemEventHandler(radListView1_ItemDataBound);
-            radListView1.VisualItemFormatting += new Telerik.WinControls.UI.ListViewVisualItemEventHandler(radListView1_VisualItemFormatting);
-            radListView1.CellFormatting += new Telerik.WinControls.UI.ListViewCellFormattingEventHandler(radListView1_CellFormatting);
-            radListView1.ColumnCreating += new ListViewColumnCreatingEventHandler(radListView1_ColumnCreating);
+            rlv_Images.ItemDataBound += new Telerik.WinControls.UI.ListViewItemEventHandler(radListView1_ItemDataBound);
+            rlv_Images.VisualItemFormatting += new Telerik.WinControls.UI.ListViewVisualItemEventHandler(radListView1_VisualItemFormatting);
+            rlv_Images.CellFormatting += new Telerik.WinControls.UI.ListViewCellFormattingEventHandler(radListView1_CellFormatting);
+            rlv_Images.ColumnCreating += new ListViewColumnCreatingEventHandler(radListView1_ColumnCreating);
 
-            radListView1.ShowColumnHeaders = false;
+            rlv_Images.ShowColumnHeaders = false;
 
-            radListView1.AllowArbitraryItemWidth = true;
-            radListView1.AllowArbitraryItemHeight = true;
+            rlv_Images.AllowArbitraryItemWidth = true;
+            rlv_Images.AllowArbitraryItemHeight = true;
 
-            radListView1.ViewType = ListViewType.IconsView;
-            ((IconListViewElement)this.radListView1.ListViewElement.ViewElement).Orientation = Orientation.Vertical;
+            rlv_Images.ViewType = ListViewType.IconsView;
+            ((IconListViewElement)this.rlv_Images.ListViewElement.ViewElement).Orientation = Orientation.Vertical;
 
-            radListView1.AllowEdit = false;
-            radListView1.AllowRemove = false;
+            rlv_Images.AllowEdit = false;
+            rlv_Images.AllowRemove = false;
 
-            radTreeView1.TreeViewElement.ShowNodeToolTips = true;
-
-            radListView1.DataSource = m_dsListView;
-            radListView1.DisplayMember = "FilePathName_Thumb";
-            radListView1.ValueMember = "FilePathName_Full";
+            rlv_Images.DataSource = m_dsListView;
+            rlv_Images.DisplayMember = "FilePathName_Thumb";
+            rlv_Images.ValueMember = "FilePathName_Full";
         }
 
         private void radListView1_ItemDataBound(object sender, Telerik.WinControls.UI.ListViewItemEventArgs e)
@@ -1338,7 +1419,22 @@ namespace CatalogViewer
 
             SetCallingIndicatorFromThread(true, false, false, false, false, true); //Turn on the "Calling Service" indicator
 
-            var apiService = new RichemontApiLibrary.ProductCatalogApi();
+            //API library 18+ accepts the host URL
+            var host = new RichemontApiLibrary.Models.Host
+            {
+                //HostUri = "https://rlg-ric-test-qua.apigee.net/dms-search-v1",
+                HostUri = m_UserBaseURL,
+                AuthenticationType = "ApiKey",
+                ApiKeyAuthentication = new RichemontApiLibrary.Models.ApiKeyAuthentication
+                {
+                    KeyName = "x-apikey",
+                    Value = "F4VJUH9JZiXV5v2hfRM5PwmYUVdatDB0"
+                }
+            };
+
+            //API library 18+ accepts the host URL as an argument to ProductCatalogApi
+            var apiService = new RichemontApiLibrary.ProductCatalogApi(host);
+
             var result = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Response();
             var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
             {
@@ -1348,7 +1444,7 @@ namespace CatalogViewer
                 Language = "en",
                 FromResult = 0,
                 PageSize = 10
-            }; //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> TO DO - add m_UserBaseURL to service parameters
+            };
 
             try
             {
@@ -1488,13 +1584,314 @@ namespace CatalogViewer
             return true;
         }
 
-        private Boolean BindTreeview(int intImagePID)
+        private Boolean CallService_AsDynamic(string strArticleNum, string strBrand, string strChannel, string m_UserBaseURL)
+        {
+            Logger _logger = new Logger();
+
+            SetCallingIndicatorFromThread(true, false, false, false, false, true); //Turn on the "Calling Service" indicator
+
+            //API library 18+ accepts the host URL
+            var host = new RichemontApiLibrary.Models.Host
+            {
+                //HostUri = "https://rlg-ric-test-qua.apigee.net/dms-search-v1",
+                HostUri = m_UserBaseURL,
+                AuthenticationType = "ApiKey",
+                ApiKeyAuthentication = new RichemontApiLibrary.Models.ApiKeyAuthentication
+                {
+                    KeyName = "x-apikey",
+                    Value = "F4VJUH9JZiXV5v2hfRM5PwmYUVdatDB0"
+                }
+            };
+
+            //API library 18+ accepts the host URL as an argument to ProductCatalogApi
+            var apiService = new RichemontApiLibrary.ProductCatalogApi(host);
+
+            var result = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Response();
+            var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
+            {
+                Article = strArticleNum,
+                Brand = strBrand,
+                Channel = strChannel,
+                Language = "en",
+                FromResult = 0,
+                PageSize = 10
+            };
+
+            try
+            {
+                DateTime tmeStart = DateTime.Now;
+
+                dynamic dynResult = apiService.GetStandardizedProductAsDynamic(request); //<----- "dynamic"
+                if (dynResult != null)
+                {
+                    dynAPIFullDataResult = dynResult; //Store the full result in dynamic variable 'dynAPIFullDataResult'
+
+                    dynamic imagesData = dynAPIFullDataResult.hits.hits[0]._source.images;
+                    if (imagesData != null)
+                    {
+                        //Note: The LoadDataTreeview() is called when the image listview selection changes, which occurs on listview loading
+                        //LoadDataSearchControls(0);
+                    }
+
+                    var BOMData = dynResult.hits.hits[0]._source.BOM;
+                    if (BOMData != null)
+                    {
+                        LoadBOMTreeview();
+                    }
+                }
+
+                m_tmeSpan_ServiceCall = DateTime.Now - tmeStart; //End the time and calculate the timespan value
+
+            }
+            catch (Exception ex)
+            {
+                //If we error, log the error and bail out now
+                _logger.Log(String.Concat("ERROR at CallService_AuxillaryData_AsDynamic, AN:", m_UserArticleNumber, ", CN:", m_UserChannel, ", BaseURL:", m_UserBaseURL, ", ex.Message:", ex.Message));
+                return false;
+            }
+
+            return true;
+        }
+
+        private Boolean xxxxxxxxxxxxxxxxxxxxxLoadDataSearchControls(int intImageIndex)
+        {
+
+            Logger _logger = new Logger();
+
+            dynamic imagesData = dynAPIFullDataResult.hits.hits[0]._source.images[intImageIndex];
+
+            try
+            {
+                cbx_DataSearchTokens.Items.Clear();
+
+                foreach (dynamic imageItem in imagesData)
+                {
+                    cbx_DataSearchTokens.Items.Add(imageItem.Name.ToString());
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                //If we error, log the error and bail out now
+                _logger.Log(String.Concat("ERROR at LoadDataSearchControls, AN:", m_UserArticleNumber, ", CN:", m_UserChannel, ", BaseURL:", m_UserBaseURL, ", ex.Message:", ex.Message));
+                return false;
+            }
+        }
+
+        private Boolean LoadDataTreeview(int intImageIndex)
+        {
+            Logger _logger = new Logger();
+
+            try
+            {
+                dynamic imagesData = dynAPIFullDataResult.hits.hits[0]._source.images[intImageIndex];
+
+                treeviewData.Nodes.Clear(); //Toss the data treeview nodes
+                cbx_DataSearchTokens.Items.Clear(); //Clear the Search dropdown
+                cbx_DataSearchTokens.Items.Add(cnstAllFieldsDropdownText); //Add to the Search dropdown
+
+                string strNodeName = dictFields["_image"];
+                RadTreeNode nodeTop = CreateNode(strNodeName, true);
+                nodeTop.Name = strNodeName;
+                nodeTop.ToolTipText = strNodeName;
+                nodeTop.Image = m_imgFolder;
+                treeviewData.Nodes.Add(nodeTop);
+
+                //AssetOrder
+                strNodeName = dictFields[imagesData.assetOrder.field.ToString()];
+                RadTreeNode childNode = CreateNode(imagesData.assetOrder.value.ToString(), false);
+                childNode.ToolTipText = strNodeName;
+                childNode.Name = strNodeName;
+                childNode.Image = m_imgFlag_red;
+                nodeTop.Nodes.Add(childNode);
+                cbx_DataSearchTokens.Items.Add(strNodeName); //Add to the Search dropdown
+
+                //ImageTypes
+                strNodeName = dictFields["_imagetypes"];
+                RadTreeNode nodeIT = CreateNode(strNodeName, false);
+                nodeIT.Name = strNodeName;
+                nodeIT.ToolTipText = strNodeName;
+                nodeIT.Image = m_imgFolder;
+                treeviewData.Nodes.Add(nodeIT);
+
+                foreach (dynamic imageItem_Types in imagesData.imageTypes)
+                {
+                    strNodeName = dictFields[imageItem_Types.field.ToString()]; //IMAGE_TYPE"
+
+                    RadTreeNode childnodeIT = CreateNode(strNodeName, false);
+                    nodeIT.Name = strNodeName;
+                    nodeIT.ToolTipText = strNodeName;
+                    nodeIT.Nodes.Add(childnodeIT);
+
+                    childNode = CreateNode(imageItem_Types.code.ToString(), false);
+                    childNode.Name = string.Concat(strNodeName,"/code");
+                    childNode.ToolTipText = string.Concat(strNodeName, "/code");
+                    childnodeIT.Nodes.Add(childNode);
+
+                    childNode = CreateNode(imageItem_Types.field.ToString(), false);
+                    childNode.Name = string.Concat(strNodeName, "/field");
+                    childNode.ToolTipText = string.Concat(strNodeName, "/field");
+                    childnodeIT.Nodes.Add(childNode);
+
+                    childNode = CreateNode(imageItem_Types.value.ToString(), false);
+                    childNode.Name = string.Concat(strNodeName, "/value");
+                    childNode.ToolTipText = string.Concat(strNodeName, "/value");
+                    childnodeIT.Nodes.Add(childNode);
+                }
+
+                cbx_DataSearchTokens.Items.Add(string.Concat(strNodeName, "/code")); //Add to the Search dropdown
+                cbx_DataSearchTokens.Items.Add(string.Concat(strNodeName, "/field")); //Add to the Search dropdown
+                cbx_DataSearchTokens.Items.Add(string.Concat(strNodeName, "/value")); //Add to the Search dropdown
+
+                //Public URL
+                strNodeName = dictFields[imagesData.publicUrl.field.ToString()]; //akamai:default
+                childNode = CreateNode(imagesData.publicUrl.value.ToString(), false);
+                childNode.Name = strNodeName;
+                childNode.ToolTipText = strNodeName;
+                childNode.Image = m_imgFlag_red;
+                nodeTop.Nodes.Add(childNode);
+                cbx_DataSearchTokens.Items.Add(strNodeName); //Add to the Search dropdown
+
+                //Name
+                strNodeName = dictFields[imagesData.name.field.ToString()]; //NAME
+                childNode = CreateNode(imagesData.name.value.ToString(), false);
+                childNode.Name = strNodeName;
+                childNode.ToolTipText = strNodeName;
+                childNode.Image = m_imgFlag_red;
+                nodeTop.Nodes.Add(childNode);
+                cbx_DataSearchTokens.Items.Add(strNodeName); //Add to the Search dropdown
+
+                //ImageBackgrounds
+                strNodeName = dictFields["_imagebackgrounds"]; //_imagebackgrounds
+                RadTreeNode nodeBG = CreateNode(strNodeName, false);
+                nodeBG.Name = strNodeName;
+                nodeBG.ToolTipText = strNodeName;
+                nodeBG.Image = m_imgFolder;
+                treeviewData.Nodes.Add(nodeBG);
+
+                foreach (dynamic imageItem_Backgrounds in imagesData.imageBackgrounds)
+                {
+                    strNodeName = dictFields[imageItem_Backgrounds.field.ToString()]; //IMAGE_BACKGROUND
+                    childNode = CreateNode(imageItem_Backgrounds.value.ToString(), false);
+                    childNode.Name = strNodeName;
+                    childNode.ToolTipText = strNodeName;
+                    childNode.Image = m_imgFlag_red;
+                    nodeBG.Nodes.Add(childNode);
+                }
+                cbx_DataSearchTokens.Items.Add(strNodeName); //Add to the Search dropdown
+
+                //ProductViews
+                strNodeName = dictFields["_productviews"]; //ProductViews
+                RadTreeNode nodePV = CreateNode(strNodeName, false);
+                nodePV.Name = strNodeName;
+                nodePV.ToolTipText = strNodeName;
+                nodePV.Image = m_imgFolder;
+                treeviewData.Nodes.Add(nodePV);
+
+                foreach (dynamic imageItem_ProductViews in imagesData.productViews)
+                {
+                    strNodeName = dictFields[imageItem_ProductViews.field.ToString()]; //PRODUCT_VIEW
+                    childNode = CreateNode(imageItem_ProductViews.value.ToString(), false);
+                    childNode.Name = strNodeName;
+                    childNode.ToolTipText = strNodeName;
+                    childNode.Image = m_imgFlag_red;
+                    nodePV.Nodes.Add(childNode);
+                }
+                cbx_DataSearchTokens.Items.Add(strNodeName); //Add to the Search dropdown
+
+                //Credit
+                strNodeName = dictFields[imagesData.credit.field.ToString()]; //CREDIT
+
+                                                                              //childNode = CreateNode(imagesData.credit.value.ToString(), false);
+                                                                              //childNode.Name = strNodeName;
+                                                                              //childNode.ToolTipText = strNodeName;
+                                                                              //childNode.Image = m_imgFlag_red;
+                                                                              //nodeTop.Nodes.Add(childNode);
+
+                RadTreeNode nodeCR = CreateNode(strNodeName, false);
+                nodeCR.Text = imagesData.credit.value.ToString();
+                nodeCR.Name = strNodeName;
+                nodeCR.ToolTipText = strNodeName;
+                nodeCR.Image = m_imgFolder;
+                treeviewData.Nodes.Add(nodeCR);
+
+                cbx_DataSearchTokens.Items.Add(strNodeName); //Add to the Search dropdown
+
+                cbx_DataSearchTokens.Text = cnstAllFieldsDropdownText;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                //If we error, log the error and bail out now
+                _logger.Log(String.Concat("ERROR at LoadDataTreeview, AN:", m_UserArticleNumber, ", CN:", m_UserChannel, ", BaseURL:", m_UserBaseURL, ", ex.Message:", ex.Message));
+                return false;
+            }
+        }
+
+        private Boolean LoadBOMTreeview()
+        {
+
+            Logger _logger = new Logger();
+
+            dynamic BOMData = dynAPIFullDataResult.hits.hits[0]._source.BOM;
+
+            try
+            {
+                treeviewBOM.Nodes.Clear();
+
+                RadTreeNode nodeTop = CreateNode("Bill of Material", true);
+                nodeTop.ToolTipText = "Bill of Material";
+                nodeTop.Image = m_imgFolder;
+                treeviewBOM.Nodes.Add(nodeTop);
+
+                int idx = 0;
+                foreach (dynamic BOMItem in BOMData)
+                {
+
+                    string strItemIndex = string.Concat("Item ", idx.ToString());
+
+                    RadTreeNode childnodeBM = CreateNode(strItemIndex, false);
+                    childnodeBM.ToolTipText = strItemIndex;
+                    nodeTop.Nodes.Add(childnodeBM);
+
+                    RadTreeNode childNode = CreateNode(BOMItem.component.ToString(), false);
+                    childNode.ToolTipText = "Component";
+                    childnodeBM.Nodes.Add(childNode);
+
+                    childNode = CreateNode(BOMItem.quantity.ToString(), false);
+                    childNode.ToolTipText = "Quantity";
+                    childnodeBM.Nodes.Add(childNode);
+
+                    childNode = CreateNode(BOMItem.label.ToString(), false);
+                    childNode.ToolTipText = "Label";
+                    childnodeBM.Nodes.Add(childNode);
+
+                    childNode = CreateNode(BOMItem.id.ToString(), false);
+                    childNode.ToolTipText = "ID";
+                    childnodeBM.Nodes.Add(childNode);
+
+                    idx += 1;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                //If we error, log the error and bail out now
+                _logger.Log(String.Concat("ERROR at LoadBOMTreeview, AN:", m_UserArticleNumber, ", CN:", m_UserChannel, ", BaseURL:", m_UserBaseURL, ", ex.Message:", ex.Message));
+                return false;
+            }
+        }
+
+        private Boolean XXXXXXXXXXXXXXXXXXXXXXBindTreeview(int intImagePID)
         {
 
             //Construct the TreeView from ds_ImageDataDataset ----------------------
 
-            radTreeView1.Nodes.Clear();
-            radTreeView1.DataSource = null;
+            treeviewData.Nodes.Clear();
+            treeviewData.DataSource = null;
 
             //ImageAssetOrder
             foreach (DataRow dbRow in ds_ImageDataDataset.Tables["dt_AO"].Rows)
@@ -1503,11 +1900,11 @@ namespace CatalogViewer
                 {
                     if (dbRow["AO_Value"].ToString() == intImagePID.ToString()) //Only display tree data for the currently selected image
                     {
-                        RadTreeNode node = CreateNode("Product Information", true, dbRow["AO_pid"].ToString());
+                        RadTreeNode node = CreateNode("Product Information", true);
                         node.ToolTipText = "Product Information";
                         node.Image = m_imgFolder;
-                        radTreeView1.Nodes.Add(node);
-                        RecursivelyPopulate(dbRow, node);
+                        treeviewData.Nodes.Add(node);
+                        //xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxRecursivelyPopulate(dbRow, node);
                     }
                 }
             }
@@ -1517,36 +1914,36 @@ namespace CatalogViewer
             {
                 if (dbRow_p["BOM_pid"].ToString() == intImagePID.ToString()) //Only display tree data for the currently selected image
                 {
-                    RadTreeNode node = CreateNode("Bill of Materials", true, dbRow_p["BOM_pid"].ToString());
+                    RadTreeNode node = CreateNode("Bill of Materials", true);
                     node.ToolTipText = "Bill of Materials";
                     node.Image = m_imgFolder;
-                    radTreeView1.Nodes.Add(node);
+                    treeviewData.Nodes.Add(node);
 
                     foreach (DataRow dbRow_c in ds_ImageDataDataset.Tables["dt_BOM"].Rows)
                     {
                         if (dbRow_c["BOM_pid"].ToString() == intImagePID.ToString()) //Only display tree data for the currently selected image
                         {
-                            RadTreeNode childNode = CreateNode(dbRow_c["BOM_Children"].ToString(), false, dbRow_c["BOM_Children"].ToString());
+                            RadTreeNode childNode = CreateNode(dbRow_c["BOM_Children"].ToString(), false);
                             childNode.ToolTipText = "Children";
                             childNode.Image = m_imgFlag_red;
                             node.Nodes.Add(childNode);
 
-                            childNode = CreateNode(dbRow_c["BOM_Component"].ToString(), false, dbRow_c["BOM_Component"].ToString());
+                            childNode = CreateNode(dbRow_c["BOM_Component"].ToString(), false);
                             childNode.ToolTipText = "Component";
                             childNode.Image = m_imgFlag_green;
                             node.Nodes.Add(childNode);
 
-                            childNode = CreateNode(dbRow_c["BOM_Id"].ToString(), false, dbRow_c["BOM_Id"].ToString());
+                            childNode = CreateNode(dbRow_c["BOM_Id"].ToString(), false);
                             childNode.ToolTipText = "Id";
                             childNode.Image = m_imgFlag_blue;
                             node.Nodes.Add(childNode);
 
-                            childNode = CreateNode(dbRow_c["BOM_Label"].ToString(), false, dbRow_c["BOM_Label"].ToString());
+                            childNode = CreateNode(dbRow_c["BOM_Label"].ToString(), false);
                             childNode.ToolTipText = "Label";
                             childNode.Image = m_imgKeyHS;
                             node.Nodes.Add(childNode);
 
-                            childNode = CreateNode(dbRow_c["BOM_Quantity"].ToString(), false, dbRow_c["BOM_Quantity"].ToString());
+                            childNode = CreateNode(dbRow_c["BOM_Quantity"].ToString(), false);
                             childNode.ToolTipText = "Quantity";
                             childNode.Image = m_imgDocViewHS;
                             node.Nodes.Add(childNode);
@@ -1560,13 +1957,13 @@ namespace CatalogViewer
 
         }
 
-        private void RecursivelyPopulate(DataRow dbRow, RadTreeNode node)
+        private void xxxxxxxxxxxxxxxxxxxxRecursivelyPopulate(DataRow dbRow, RadTreeNode node)
         {
 
             //ImageTypes
             foreach (DataRow childRow in dbRow.GetChildRows("GlobalVar_IT"))
             {
-                RadTreeNode childNode = CreateNode(childRow["IT_Value"].ToString(), true, childRow["IT_id"].ToString());
+                RadTreeNode childNode = CreateNode(childRow["IT_Value"].ToString(), true);
                 childNode.ToolTipText = "Image Type";
                 childNode.Image = m_imgFlag_red;
                 node.Nodes.Add(childNode);
@@ -1575,7 +1972,7 @@ namespace CatalogViewer
             //PublicUrl
             foreach (DataRow childRow in dbRow.GetChildRows("GlobalVar_PU"))
             {
-                RadTreeNode childNode = CreateNode(childRow["PU_Value"].ToString(), false, childRow["PU_id"].ToString());
+                RadTreeNode childNode = CreateNode(childRow["PU_Value"].ToString(), false);
                 childNode.ToolTipText = "Public URL";
                 childNode.Image = m_imgFlag_green;
                 node.Nodes.Add(childNode);
@@ -1584,7 +1981,7 @@ namespace CatalogViewer
             //StandardizedArticleType
             foreach (DataRow childRow in dbRow.GetChildRows("GlobalVar_SAT"))
             {
-                RadTreeNode childNode = CreateNode(childRow["SAT_Value"].ToString(), false, childRow["SAT_id"].ToString());
+                RadTreeNode childNode = CreateNode(childRow["SAT_Value"].ToString(), false);
                 childNode.ToolTipText = "Standardized Article Type";
                 childNode.Image = m_imgFlag_blue;
                 node.Nodes.Add(childNode);
@@ -1602,13 +1999,83 @@ namespace CatalogViewer
 
         }
 
-        private RadTreeNode CreateNode(string text, bool expanded, string id)
+        private RadTreeNode CreateNode(string text, bool expanded)
         {
             RadTreeNode node = new RadTreeNode(text, expanded);
             return node;
         }
 
+        private void btn_LocateValue_Click(object sender, EventArgs e)
+        {
 
+            //<<<<<<<<<<<<<<<<<<<< TO DO  check user entry
+
+            string strLocateField = cbx_DataSearchTokens.Text;
+            string strLocateValue = tbx_LocateValue.Text;
+
+            Telerik.WinControls.UI.RadTreeNodeCollection nodes = treeviewData.Nodes;
+            treeviewData.SelectedNode = null;
+            ClearDataTreeRecursive(nodes, false);
+            SearchDataTreeRecursive(nodes, strLocateField, strLocateValue);
+        }
+
+        private bool SearchDataTreeRecursive(IEnumerable nodes, string strField, string strValue)
+        {
+            foreach (Telerik.WinControls.UI.RadTreeNode node in nodes)
+            {
+                if (node.Text.ToLower().Contains(strValue.ToLower()))
+                {
+                    if (cbx_DataSearchTokens.Text == cnstAllFieldsDropdownText)
+                    {
+                        treeviewData.SelectedNode = node;
+                        node.BackColor = Color.Yellow;
+                        node.Expanded = true;
+                    }
+                    else
+                    {
+                        if (node.Name.ToLower() == strField.ToLower())
+                        {
+                            treeviewData.SelectedNode = node;
+                            node.BackColor = Color.Yellow;
+                            node.Expanded = true;
+                        }
+                    }
+                }
+
+                if (SearchDataTreeRecursive(node.Nodes, strField, strValue))
+                        return true;
+             
+            }
+            return false;
+        }
+
+        private void btn_TreeLocateReset_Click(object sender, EventArgs e)
+        {
+            cbx_DataSearchTokens.Text = cnstAllFieldsDropdownText;
+            tbx_LocateValue.Text = string.Empty;
+
+            Telerik.WinControls.UI.RadTreeNodeCollection nodes = treeviewData.Nodes;
+            ClearDataTreeRecursive(nodes, false);
+        }
+
+        private bool ClearDataTreeRecursive(IEnumerable nodes, Boolean bolCollapseAllNoes)
+        {
+            foreach (Telerik.WinControls.UI.RadTreeNode node in nodes)
+            {
+                node.BackColor = Color.White;
+                node.BorderColor = Color.White;
+
+                if (bolCollapseAllNoes)
+                {
+                    node.Expanded = false;
+                };
+
+            if (ClearDataTreeRecursive(node.Nodes, bolCollapseAllNoes))
+                return true;
+        }
+            return false;
+        }
+    
     }
 }
     #endregion

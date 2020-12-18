@@ -30,8 +30,8 @@
         {
             this.label1 = new System.Windows.Forms.Label();
             this.radImageEditor1 = new Telerik.WinControls.UI.RadImageEditor();
-            this.radListView1 = new Telerik.WinControls.UI.RadListView();
-            this.radTreeView1 = new Telerik.WinControls.UI.RadTreeView();
+            this.rlv_Images = new Telerik.WinControls.UI.RadListView();
+            this.treeviewData = new Telerik.WinControls.UI.RadTreeView();
             this.radThemeManager1 = new Telerik.WinControls.RadThemeManager();
             this.pnl_ArticleCall = new System.Windows.Forms.Panel();
             this.pnl_ActivityIndicator = new System.Windows.Forms.Panel();
@@ -42,7 +42,7 @@
             this.btn_CallService = new System.Windows.Forms.Button();
             this.cbx_Channel = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this.pnl_ReadyPanel = new System.Windows.Forms.Panel();
             this.pb_BrandLogo = new System.Windows.Forms.PictureBox();
             this.tbx_CallMessage = new System.Windows.Forms.TextBox();
             this.pb_Download = new System.Windows.Forms.ProgressBar();
@@ -62,16 +62,39 @@
             this.btn_Exit = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.radSplitContainer1 = new Telerik.WinControls.UI.RadSplitContainer();
+            this.splitPanel1 = new Telerik.WinControls.UI.SplitPanel();
+            this.pnl_DataTreeview = new System.Windows.Forms.Panel();
+            this.pnl_DataSearch = new System.Windows.Forms.Panel();
+            this.btn_TreeLocateReset = new System.Windows.Forms.Button();
+            this.btn_LocateValue = new System.Windows.Forms.Button();
+            this.tbx_LocateValue = new System.Windows.Forms.TextBox();
+            this.cbx_DataSearchTokens = new System.Windows.Forms.ComboBox();
+            this.splitPanel2 = new Telerik.WinControls.UI.SplitPanel();
+            this.treeviewBOM = new Telerik.WinControls.UI.RadTreeView();
+            this.pnl_Treeviews = new System.Windows.Forms.Panel();
+            this.pnl_Editor = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.radImageEditor1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.radListView1)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.radTreeView1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rlv_Images)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.treeviewData)).BeginInit();
             this.pnl_ArticleCall.SuspendLayout();
             this.pnl_ActivityIndicator.SuspendLayout();
-            this.panel1.SuspendLayout();
+            this.pnl_ReadyPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_BrandLogo)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_ImageFullSize)).BeginInit();
             this.pnl_Footer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radSplitContainer1)).BeginInit();
+            this.radSplitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitPanel1)).BeginInit();
+            this.splitPanel1.SuspendLayout();
+            this.pnl_DataTreeview.SuspendLayout();
+            this.pnl_DataSearch.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitPanel2)).BeginInit();
+            this.splitPanel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.treeviewBOM)).BeginInit();
+            this.pnl_Treeviews.SuspendLayout();
+            this.pnl_Editor.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
@@ -88,14 +111,14 @@
             this.radImageEditor1.AllowDrop = true;
             this.radImageEditor1.BackColor = System.Drawing.SystemColors.Control;
             this.radImageEditor1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.radImageEditor1.Location = new System.Drawing.Point(189, 110);
+            this.radImageEditor1.Location = new System.Drawing.Point(0, 0);
             this.radImageEditor1.Name = "radImageEditor1";
             // 
             // 
             // 
             this.radImageEditor1.RootElement.AutoSize = false;
             this.radImageEditor1.RootElement.ScaleTransform = new System.Drawing.SizeF(1F, 1F);
-            this.radImageEditor1.Size = new System.Drawing.Size(562, 446);
+            this.radImageEditor1.Size = new System.Drawing.Size(537, 446);
             this.radImageEditor1.TabIndex = 5;
             this.radImageEditor1.Text = "radImageEditor1";
             this.radImageEditor1.ImageLoaded += new System.ComponentModel.AsyncCompletedEventHandler(this.RadImageEditor1_ImageLoaded);
@@ -106,39 +129,47 @@
             ((Telerik.WinControls.UI.RadTrackBarElement)(this.radImageEditor1.GetChildAt(0).GetChildAt(2).GetChildAt(0))).BackColor = System.Drawing.Color.Transparent;
             ((Telerik.WinControls.Primitives.FillPrimitive)(this.radImageEditor1.GetChildAt(0).GetChildAt(2).GetChildAt(0).GetChildAt(0).GetChildAt(0))).BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(241)))), ((int)(((byte)(252)))));
             // 
-            // radListView1
+            // rlv_Images
             // 
-            this.radListView1.AllowArbitraryItemHeight = true;
-            this.radListView1.AllowArbitraryItemWidth = true;
-            this.radListView1.AllowColumnReorder = false;
-            this.radListView1.AllowColumnResize = false;
-            this.radListView1.AllowEdit = false;
-            this.radListView1.AllowRemove = false;
-            this.radListView1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.radListView1.FullRowSelect = false;
-            this.radListView1.ItemSize = new System.Drawing.Size(100, 200);
-            this.radListView1.Location = new System.Drawing.Point(0, 110);
-            this.radListView1.Name = "radListView1";
-            this.radListView1.SelectLastAddedItem = false;
-            this.radListView1.ShowColumnHeaders = false;
-            this.radListView1.Size = new System.Drawing.Size(189, 446);
-            this.radListView1.TabIndex = 8;
-            this.radListView1.ViewType = Telerik.WinControls.UI.ListViewType.IconsView;
-            this.radListView1.SelectedItemChanged += new System.EventHandler(this.radListView1_SelectedItemChanged);
+            this.rlv_Images.AllowArbitraryItemHeight = true;
+            this.rlv_Images.AllowArbitraryItemWidth = true;
+            this.rlv_Images.AllowColumnReorder = false;
+            this.rlv_Images.AllowColumnResize = false;
+            this.rlv_Images.AllowEdit = false;
+            this.rlv_Images.AllowRemove = false;
+            this.rlv_Images.Dock = System.Windows.Forms.DockStyle.Left;
+            this.rlv_Images.FullRowSelect = false;
+            this.rlv_Images.ItemSize = new System.Drawing.Size(100, 200);
+            this.rlv_Images.Location = new System.Drawing.Point(0, 110);
+            this.rlv_Images.Name = "rlv_Images";
+            this.rlv_Images.SelectLastAddedItem = false;
+            this.rlv_Images.ShowColumnHeaders = false;
+            this.rlv_Images.Size = new System.Drawing.Size(203, 446);
+            this.rlv_Images.TabIndex = 8;
+            this.rlv_Images.ViewType = Telerik.WinControls.UI.ListViewType.IconsView;
+            this.rlv_Images.SelectedItemChanged += new System.EventHandler(this.radListView1_SelectedItemChanged);
             // 
-            // radTreeView1
+            // treeviewData
             // 
-            this.radTreeView1.BackColor = System.Drawing.SystemColors.Control;
-            this.radTreeView1.Cursor = System.Windows.Forms.Cursors.Default;
-            this.radTreeView1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.radTreeView1.Font = new System.Drawing.Font("Segoe UI", 8.25F);
-            this.radTreeView1.ForeColor = System.Drawing.Color.Black;
-            this.radTreeView1.Location = new System.Drawing.Point(751, 110);
-            this.radTreeView1.Name = "radTreeView1";
-            this.radTreeView1.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.radTreeView1.Size = new System.Drawing.Size(198, 446);
-            this.radTreeView1.SpacingBetweenNodes = -1;
-            this.radTreeView1.TabIndex = 9;
+            this.treeviewData.BackColor = System.Drawing.SystemColors.Control;
+            this.treeviewData.Cursor = System.Windows.Forms.Cursors.Default;
+            this.treeviewData.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeviewData.Font = new System.Drawing.Font("Segoe UI", 8.25F);
+            this.treeviewData.ForeColor = System.Drawing.Color.Black;
+            this.treeviewData.Location = new System.Drawing.Point(0, 0);
+            this.treeviewData.MinimumSize = new System.Drawing.Size(0, 25);
+            this.treeviewData.Name = "treeviewData";
+            this.treeviewData.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            // 
+            // 
+            // 
+            this.treeviewData.RootElement.MinSize = new System.Drawing.Size(0, 25);
+            this.treeviewData.ShowDragHint = false;
+            this.treeviewData.ShowDropHint = false;
+            this.treeviewData.ShowNodeToolTips = true;
+            this.treeviewData.Size = new System.Drawing.Size(209, 230);
+            this.treeviewData.SpacingBetweenNodes = -1;
+            this.treeviewData.TabIndex = 9;
             // 
             // pnl_ArticleCall
             // 
@@ -148,7 +179,7 @@
             this.pnl_ArticleCall.Controls.Add(this.btn_CallService);
             this.pnl_ArticleCall.Controls.Add(this.cbx_Channel);
             this.pnl_ArticleCall.Controls.Add(this.label6);
-            this.pnl_ArticleCall.Controls.Add(this.panel1);
+            this.pnl_ArticleCall.Controls.Add(this.pnl_ReadyPanel);
             this.pnl_ArticleCall.Controls.Add(this.btn_Abort);
             this.pnl_ArticleCall.Controls.Add(this.cbx_ArticleNum);
             this.pnl_ArticleCall.Controls.Add(this.label5);
@@ -251,18 +282,18 @@
             this.label6.TabIndex = 16;
             this.label6.Text = "Channel:";
             // 
-            // panel1
+            // pnl_ReadyPanel
             // 
-            this.panel1.Controls.Add(this.pb_BrandLogo);
-            this.panel1.Controls.Add(this.tbx_CallMessage);
-            this.panel1.Controls.Add(this.pb_Download);
-            this.panel1.Controls.Add(this.lbl_ReadyIndicator);
-            this.panel1.Controls.Add(this.lbl_ProgressBar);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel1.Location = new System.Drawing.Point(549, 0);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(400, 110);
-            this.panel1.TabIndex = 15;
+            this.pnl_ReadyPanel.Controls.Add(this.pb_BrandLogo);
+            this.pnl_ReadyPanel.Controls.Add(this.tbx_CallMessage);
+            this.pnl_ReadyPanel.Controls.Add(this.pb_Download);
+            this.pnl_ReadyPanel.Controls.Add(this.lbl_ReadyIndicator);
+            this.pnl_ReadyPanel.Controls.Add(this.lbl_ProgressBar);
+            this.pnl_ReadyPanel.Dock = System.Windows.Forms.DockStyle.Right;
+            this.pnl_ReadyPanel.Location = new System.Drawing.Point(549, 0);
+            this.pnl_ReadyPanel.Name = "pnl_ReadyPanel";
+            this.pnl_ReadyPanel.Size = new System.Drawing.Size(400, 110);
+            this.pnl_ReadyPanel.TabIndex = 15;
             // 
             // pb_BrandLogo
             // 
@@ -506,15 +537,161 @@
             this.pictureBox1.TabIndex = 0;
             this.pictureBox1.TabStop = false;
             // 
+            // radSplitContainer1
+            // 
+            this.radSplitContainer1.Controls.Add(this.splitPanel1);
+            this.radSplitContainer1.Controls.Add(this.splitPanel2);
+            this.radSplitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.radSplitContainer1.Location = new System.Drawing.Point(0, 0);
+            this.radSplitContainer1.Name = "radSplitContainer1";
+            this.radSplitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // 
+            // 
+            this.radSplitContainer1.RootElement.MinSize = new System.Drawing.Size(25, 25);
+            this.radSplitContainer1.Size = new System.Drawing.Size(209, 446);
+            this.radSplitContainer1.SplitterWidth = 8;
+            this.radSplitContainer1.TabIndex = 16;
+            this.radSplitContainer1.TabStop = false;
+            // 
+            // splitPanel1
+            // 
+            this.splitPanel1.Controls.Add(this.pnl_DataTreeview);
+            this.splitPanel1.Controls.Add(this.pnl_DataSearch);
+            this.splitPanel1.Location = new System.Drawing.Point(0, 0);
+            this.splitPanel1.Name = "splitPanel1";
+            // 
+            // 
+            // 
+            this.splitPanel1.RootElement.MinSize = new System.Drawing.Size(25, 25);
+            this.splitPanel1.Size = new System.Drawing.Size(209, 295);
+            this.splitPanel1.SizeInfo.AutoSizeScale = new System.Drawing.SizeF(0F, 0.173516F);
+            this.splitPanel1.SizeInfo.SplitterCorrection = new System.Drawing.Size(0, 76);
+            this.splitPanel1.TabIndex = 0;
+            this.splitPanel1.TabStop = false;
+            this.splitPanel1.Text = "splitPanel1";
+            // 
+            // pnl_DataTreeview
+            // 
+            this.pnl_DataTreeview.Controls.Add(this.treeviewData);
+            this.pnl_DataTreeview.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnl_DataTreeview.Location = new System.Drawing.Point(0, 65);
+            this.pnl_DataTreeview.Name = "pnl_DataTreeview";
+            this.pnl_DataTreeview.Size = new System.Drawing.Size(209, 230);
+            this.pnl_DataTreeview.TabIndex = 11;
+            // 
+            // pnl_DataSearch
+            // 
+            this.pnl_DataSearch.Controls.Add(this.btn_TreeLocateReset);
+            this.pnl_DataSearch.Controls.Add(this.btn_LocateValue);
+            this.pnl_DataSearch.Controls.Add(this.tbx_LocateValue);
+            this.pnl_DataSearch.Controls.Add(this.cbx_DataSearchTokens);
+            this.pnl_DataSearch.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnl_DataSearch.Location = new System.Drawing.Point(0, 0);
+            this.pnl_DataSearch.Name = "pnl_DataSearch";
+            this.pnl_DataSearch.Size = new System.Drawing.Size(209, 65);
+            this.pnl_DataSearch.TabIndex = 10;
+            // 
+            // btn_TreeLocateReset
+            // 
+            this.btn_TreeLocateReset.Enabled = false;
+            this.btn_TreeLocateReset.Location = new System.Drawing.Point(159, 6);
+            this.btn_TreeLocateReset.Name = "btn_TreeLocateReset";
+            this.btn_TreeLocateReset.Size = new System.Drawing.Size(41, 21);
+            this.btn_TreeLocateReset.TabIndex = 5;
+            this.btn_TreeLocateReset.Text = "Clear";
+            this.btn_TreeLocateReset.UseVisualStyleBackColor = true;
+            this.btn_TreeLocateReset.Click += new System.EventHandler(this.btn_TreeLocateReset_Click);
+            // 
+            // btn_LocateValue
+            // 
+            this.btn_LocateValue.Enabled = false;
+            this.btn_LocateValue.Location = new System.Drawing.Point(159, 31);
+            this.btn_LocateValue.Name = "btn_LocateValue";
+            this.btn_LocateValue.Size = new System.Drawing.Size(43, 23);
+            this.btn_LocateValue.TabIndex = 4;
+            this.btn_LocateValue.Text = "Go";
+            this.btn_LocateValue.UseVisualStyleBackColor = true;
+            this.btn_LocateValue.Click += new System.EventHandler(this.btn_LocateValue_Click);
+            // 
+            // tbx_LocateValue
+            // 
+            this.tbx_LocateValue.Enabled = false;
+            this.tbx_LocateValue.Location = new System.Drawing.Point(6, 33);
+            this.tbx_LocateValue.Name = "tbx_LocateValue";
+            this.tbx_LocateValue.Size = new System.Drawing.Size(147, 20);
+            this.tbx_LocateValue.TabIndex = 3;
+            // 
+            // cbx_DataSearchTokens
+            // 
+            this.cbx_DataSearchTokens.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbx_DataSearchTokens.Enabled = false;
+            this.cbx_DataSearchTokens.FormattingEnabled = true;
+            this.cbx_DataSearchTokens.Location = new System.Drawing.Point(6, 6);
+            this.cbx_DataSearchTokens.Name = "cbx_DataSearchTokens";
+            this.cbx_DataSearchTokens.Size = new System.Drawing.Size(147, 21);
+            this.cbx_DataSearchTokens.TabIndex = 0;
+            // 
+            // splitPanel2
+            // 
+            this.splitPanel2.Controls.Add(this.treeviewBOM);
+            this.splitPanel2.Location = new System.Drawing.Point(0, 303);
+            this.splitPanel2.Name = "splitPanel2";
+            // 
+            // 
+            // 
+            this.splitPanel2.RootElement.MinSize = new System.Drawing.Size(25, 25);
+            this.splitPanel2.Size = new System.Drawing.Size(209, 143);
+            this.splitPanel2.SizeInfo.AutoSizeScale = new System.Drawing.SizeF(0F, -0.173516F);
+            this.splitPanel2.SizeInfo.SplitterCorrection = new System.Drawing.Size(0, -76);
+            this.splitPanel2.TabIndex = 1;
+            this.splitPanel2.TabStop = false;
+            this.splitPanel2.Text = "splitPanel2";
+            // 
+            // treeviewBOM
+            // 
+            this.treeviewBOM.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeviewBOM.Location = new System.Drawing.Point(0, 0);
+            this.treeviewBOM.MinimumSize = new System.Drawing.Size(0, 25);
+            this.treeviewBOM.Name = "treeviewBOM";
+            // 
+            // 
+            // 
+            this.treeviewBOM.RootElement.MinSize = new System.Drawing.Size(0, 25);
+            this.treeviewBOM.ShowDragHint = false;
+            this.treeviewBOM.ShowDropHint = false;
+            this.treeviewBOM.ShowNodeToolTips = true;
+            this.treeviewBOM.Size = new System.Drawing.Size(209, 143);
+            this.treeviewBOM.SpacingBetweenNodes = -1;
+            this.treeviewBOM.TabIndex = 0;
+            // 
+            // pnl_Treeviews
+            // 
+            this.pnl_Treeviews.Controls.Add(this.radSplitContainer1);
+            this.pnl_Treeviews.Dock = System.Windows.Forms.DockStyle.Right;
+            this.pnl_Treeviews.Location = new System.Drawing.Point(740, 110);
+            this.pnl_Treeviews.Name = "pnl_Treeviews";
+            this.pnl_Treeviews.Size = new System.Drawing.Size(209, 446);
+            this.pnl_Treeviews.TabIndex = 17;
+            // 
+            // pnl_Editor
+            // 
+            this.pnl_Editor.Controls.Add(this.radImageEditor1);
+            this.pnl_Editor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnl_Editor.Location = new System.Drawing.Point(203, 110);
+            this.pnl_Editor.Name = "pnl_Editor";
+            this.pnl_Editor.Size = new System.Drawing.Size(537, 446);
+            this.pnl_Editor.TabIndex = 18;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Window;
             this.ClientSize = new System.Drawing.Size(949, 591);
-            this.Controls.Add(this.radImageEditor1);
-            this.Controls.Add(this.radTreeView1);
-            this.Controls.Add(this.radListView1);
+            this.Controls.Add(this.pnl_Editor);
+            this.Controls.Add(this.pnl_Treeviews);
+            this.Controls.Add(this.rlv_Images);
             this.Controls.Add(this.pnl_ArticleCall);
             this.Controls.Add(this.pnl_Footer);
             this.MinimumSize = new System.Drawing.Size(965, 587);
@@ -523,18 +700,30 @@
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.SizeChanged += new System.EventHandler(this.Form1_SizeChanged);
             ((System.ComponentModel.ISupportInitialize)(this.radImageEditor1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.radListView1)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.radTreeView1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.rlv_Images)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.treeviewData)).EndInit();
             this.pnl_ArticleCall.ResumeLayout(false);
             this.pnl_ArticleCall.PerformLayout();
             this.pnl_ActivityIndicator.ResumeLayout(false);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this.pnl_ReadyPanel.ResumeLayout(false);
+            this.pnl_ReadyPanel.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pb_BrandLogo)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_ImageFullSize)).EndInit();
             this.pnl_Footer.ResumeLayout(false);
             this.pnl_Footer.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.radSplitContainer1)).EndInit();
+            this.radSplitContainer1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitPanel1)).EndInit();
+            this.splitPanel1.ResumeLayout(false);
+            this.pnl_DataTreeview.ResumeLayout(false);
+            this.pnl_DataSearch.ResumeLayout(false);
+            this.pnl_DataSearch.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitPanel2)).EndInit();
+            this.splitPanel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.treeviewBOM)).EndInit();
+            this.pnl_Treeviews.ResumeLayout(false);
+            this.pnl_Editor.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -543,8 +732,8 @@
 
         private System.Windows.Forms.Label label1;
         private Telerik.WinControls.UI.RadImageEditor radImageEditor1;
-        private Telerik.WinControls.UI.RadListView radListView1;
-        private Telerik.WinControls.UI.RadTreeView radTreeView1;
+        private Telerik.WinControls.UI.RadListView rlv_Images;
+        private Telerik.WinControls.UI.RadTreeView treeviewData;
         private Telerik.WinControls.RadThemeManager radThemeManager1;
         private System.Windows.Forms.Panel pnl_ArticleCall;
         private System.Windows.Forms.Panel pnl_Footer;
@@ -561,7 +750,7 @@
         private System.Windows.Forms.Label lbl_ReadyIndicator;
         private System.Windows.Forms.Button btn_Abort;
         private System.Windows.Forms.ProgressBar pb_Download;
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel pnl_ReadyPanel;
         private System.Windows.Forms.Label lbl_AppVersion;
         private System.Windows.Forms.ComboBox cbx_Channel;
         private System.Windows.Forms.Label label6;
@@ -575,6 +764,18 @@
         private System.Windows.Forms.Label lbl_ProgressBar;
         private System.Windows.Forms.ComboBox drp_Timings;
         private System.Windows.Forms.CheckBox cbx_LogTimings;
+        private Telerik.WinControls.UI.RadSplitContainer radSplitContainer1;
+        private Telerik.WinControls.UI.SplitPanel splitPanel1;
+        private Telerik.WinControls.UI.SplitPanel splitPanel2;
+        private Telerik.WinControls.UI.RadTreeView treeviewBOM;
+        private System.Windows.Forms.Panel pnl_Treeviews;
+        private System.Windows.Forms.Panel pnl_Editor;
+        private System.Windows.Forms.Panel pnl_DataTreeview;
+        private System.Windows.Forms.Panel pnl_DataSearch;
+        private System.Windows.Forms.ComboBox cbx_DataSearchTokens;
+        private System.Windows.Forms.Button btn_LocateValue;
+        private System.Windows.Forms.TextBox tbx_LocateValue;
+        private System.Windows.Forms.Button btn_TreeLocateReset;
     }
 }
 

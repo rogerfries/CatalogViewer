@@ -470,7 +470,7 @@ namespace CatalogViewer
                 tbx_LocateValue.Enabled = false;
                 btn_TreeLocateReset.Enabled = false;
                 btn_LocateValue.Enabled = false;
-                
+
             }
             else
             {
@@ -1433,7 +1433,7 @@ namespace CatalogViewer
             };
 
             //API library 18+ accepts the host URL as an argument to ProductCatalogApi
-            var apiService = new RichemontApiLibrary.ProductCatalogApi(host);
+            var apiService = new RichemontApiLibrary.ProductCatalogApi();
 
             var result = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Response();
             var request = new RichemontApiLibrary.Models.ProductCatalog.Queries.StandardizedProduct.Request
@@ -1595,12 +1595,19 @@ namespace CatalogViewer
             {
                 //HostUri = "https://rlg-ric-test-qua.apigee.net/dms-search-v1",
                 HostUri = m_UserBaseURL,
-                AuthenticationType = "ApiKey",
-                ApiKeyAuthentication = new RichemontApiLibrary.Models.ApiKeyAuthentication
+                AuthenticationType = "OAuth20",
+                OAuth20Authentication = new RichemontApiLibrary.Models.OAuth20Authentication
                 {
-                    KeyName = "x-apikey",
-                    Value = "F4VJUH9JZiXV5v2hfRM5PwmYUVdatDB0"
-                }
+                    AuthUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/auth",
+                    AccessTokenUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/token",
+                    ClientId = "owA70jy8Xbqgf422W1RUlAqDY5OkfWWZ",
+                    ClientSecret = "G4SZqZIkPZMGGrUa"
+                },
+                //ApiKeyAuthentication = new RichemontApiLibrary.Models.ApiKeyAuthentication
+                //{
+                //    KeyName = "x-apikey",
+                //    Value = "F4VJUH9JZiXV5v2hfRM5PwmYUVdatDB0"
+                //}
             };
 
             //API library 18+ accepts the host URL as an argument to ProductCatalogApi
@@ -1725,7 +1732,7 @@ namespace CatalogViewer
                     nodeIT.Nodes.Add(childnodeIT);
 
                     childNode = CreateNode(imageItem_Types.code.ToString(), false);
-                    childNode.Name = string.Concat(strNodeName,"/code");
+                    childNode.Name = string.Concat(strNodeName, "/code");
                     childNode.ToolTipText = string.Concat(strNodeName, "/code");
                     childnodeIT.Nodes.Add(childNode);
 
@@ -1803,11 +1810,11 @@ namespace CatalogViewer
                 //Credit
                 strNodeName = dictFields[imagesData.credit.field.ToString()]; //CREDIT
 
-                                                                              //childNode = CreateNode(imagesData.credit.value.ToString(), false);
-                                                                              //childNode.Name = strNodeName;
-                                                                              //childNode.ToolTipText = strNodeName;
-                                                                              //childNode.Image = m_imgFlag_red;
-                                                                              //nodeTop.Nodes.Add(childNode);
+                //childNode = CreateNode(imagesData.credit.value.ToString(), false);
+                //childNode.Name = strNodeName;
+                //childNode.ToolTipText = strNodeName;
+                //childNode.Image = m_imgFlag_red;
+                //nodeTop.Nodes.Add(childNode);
 
                 RadTreeNode nodeCR = CreateNode(strNodeName, false);
                 nodeCR.Text = imagesData.credit.value.ToString();
@@ -2043,8 +2050,8 @@ namespace CatalogViewer
                 }
 
                 if (SearchDataTreeRecursive(node.Nodes, strField, strValue))
-                        return true;
-             
+                    return true;
+
             }
             return false;
         }
@@ -2070,15 +2077,15 @@ namespace CatalogViewer
                     node.Expanded = false;
                 };
 
-            if (ClearDataTreeRecursive(node.Nodes, bolCollapseAllNoes))
-                return true;
-        }
+                if (ClearDataTreeRecursive(node.Nodes, bolCollapseAllNoes))
+                    return true;
+            }
             return false;
         }
-    
+
     }
 }
-    #endregion
+#endregion
 
 #region Data Classes ================================================================================================================================================
 
@@ -2196,8 +2203,8 @@ public class ImageData
     }
 
     //ImageAssetOrder
-    public int pid {get {return this._pid;} set {this._pid = value;}}
-    public string AO_Field {get {return this._AO_Field;} set {this._AO_Field = value;}}
+    public int pid { get { return this._pid; } set { this._pid = value; } }
+    public string AO_Field { get { return this._AO_Field; } set { this._AO_Field = value; } }
     public string AO_Value { get { return this._AO_Value; } set { this._AO_Value = value; } }
 
     //ImageType

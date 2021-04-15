@@ -264,13 +264,14 @@
             // 
             this.cbx_Channel.FormattingEnabled = true;
             this.cbx_Channel.Items.AddRange(new object[] {
+            "CRM",
             "IPADRETAIL",
             "WEB"});
             this.cbx_Channel.Location = new System.Drawing.Point(96, 58);
             this.cbx_Channel.Name = "cbx_Channel";
             this.cbx_Channel.Size = new System.Drawing.Size(107, 21);
             this.cbx_Channel.TabIndex = 17;
-            this.cbx_Channel.Text = "IPADRETAIL";
+            this.cbx_Channel.Text = "CRM";
             this.cbx_Channel.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cbx_Channel_KeyDown);
             // 
             // label6

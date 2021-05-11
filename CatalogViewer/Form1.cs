@@ -1598,10 +1598,16 @@ namespace CatalogViewer
                 AuthenticationType = "OAuth20",
                 OAuth20Authentication = new RichemontApiLibrary.Models.OAuth20Authentication
                 {
-                    AuthUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/auth",
-                    AccessTokenUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/token",
-                    ClientId = "owA70jy8Xbqgf422W1RUlAqDY5OkfWWZ",
-                    ClientSecret = "G4SZqZIkPZMGGrUa"
+                    //AuthUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/auth",             //  RKF 5/11/2021
+                    //AccessTokenUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/token",     //  RKF 5/11/2021
+
+                    AuthUrl = "https://rlg-ric-prod-prd.apigee.net/oauth2/auth",                                                    //  RKF 5/11/2021
+                    AccessTokenUrl = "https://rlg-ric-prod-prd.apigee.net/oauth2/token",                                            //  RKF 5/11/2021 
+
+                    //ClientId = "owA70jy8Xbqgf422W1RUlAqDY5OkfWWZ",            //  RKF 5/11/2021
+                    // ClientSecret = "G4SZqZIkPZMGGrUa"                        //  RKF 5/11/2021
+                    ClientId = "vdHf5QCAi85QkvjrV43T0A9TAhOsZunM",              //  RKF 5/11/2021
+                    ClientSecret = "b2pLMd62wHmZnkfQ"                           //  RKF 5/11/2021
                 },
                 //ApiKeyAuthentication = new RichemontApiLibrary.Models.ApiKeyAuthentication
                 //{

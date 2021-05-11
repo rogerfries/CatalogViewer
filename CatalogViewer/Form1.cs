@@ -1601,7 +1601,7 @@ namespace CatalogViewer
                     //AuthUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/auth",             //  RKF 5/11/2021
                     //AccessTokenUrl = "https://keycloak.richemont.com/auth/realms/apim-ww-test/protocol/openid-connect/token",     //  RKF 5/11/2021
 
-                    AuthUrl = "https://rlg-ric-prod-prd.apigee.net/oauth2/auth",                                                    //  RKF 5/11/2021
+                    AuthUrl = "https://rlg-ric-prod-prd.apigee.net/oauth2/token",                                                    //  RKF 5/11/2021
                     AccessTokenUrl = "https://rlg-ric-prod-prd.apigee.net/oauth2/token",                                            //  RKF 5/11/2021 
 
                     //ClientId = "owA70jy8Xbqgf422W1RUlAqDY5OkfWWZ",            //  RKF 5/11/2021
